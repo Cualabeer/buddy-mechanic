@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Admin Panel</title>
+<style>
+  body {
+    margin: 0; font-family: 'Segoe UI', sans-serif;
+    background: #f7f8fa; color: #222;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  header {
+    background: #111; color: #1abc9c;
+    padding: 15px 20px; font-size: 1.6rem;
+    text-align: center; font-weight: bold;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header button {
+    background: crimson; border: none; color: white;
+    padding: 8px 14px; border-radius: 6px; font-weight: bold;
+    cursor: pointer; font-size: 0.9rem;
+  }
+  main {
+    flex: 1; padding: 15px 20px; max-width: 600px; margin: auto; width: 100%;
+  }
+  h2 { color: #16a085; margin-bottom: 12px; font-size: 1.3rem; }
+  label { display: block; margin: 10px 0 5px; font-weight: 600; }
+  input[type="text"], input[type="number"], input[type="password"] {
+    width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+  }
+  button {
+    background: #1abc9c; border: none; padding: 12px; color: white;
+    font-weight: bold; border-radius: 8px; margin-top: 12px; width: 100%;
+    cursor: pointer;
+  }
+  .hidden { display: none; }
+
+  /* Login screen */
+  #loginScreen {
+    flex: 1; display: flex; justify-content: center; align-items: center;
+    background: #222; color: white; flex-direction: column;
+    padding: 20px;
+  }
+  #loginScreen input {
+    margin-top: 10px; max-width: 300px; text-align: center;
+  }
+</style>
+</head>
+<body>
+<header>
+  <span>Ey Buddy Admin Panel</span>
+  <button id="logoutBtn" class="hidden">Logout</button>
+</header>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+  <h2>Admin Login</h2>
+  <input id="loginPassword" type="password" placeholder="Enter Password" />
+  <button id="loginBtn">Login</button>
+  <p id="loginMessage" style="color:red; margin-top:10px;"></p>
+</div>
+
+<!-- Main Admin Panel -->
+<main id="adminPanel" class="hidden">
+  <h2>Settings</h2>
+  <label for="hourlyRateInput">Price Per Hour (£)</label>
+  <input id="hourlyRateInput" type="number" min="0" step="0.01" />
+
+  <label for="calloutFeeInput">Call-out Fee (£)</label>
+  <input id="calloutFeeInput" type="number" min="0" step="0.01" />
+
+  <div id="servicesContainer"></div>
+
+  <section id="addServiceSection">
+    <h2>Add New Service</h2>
+    <label for="newServiceName">Service Name</label>
+    <input id="newServiceName" type="text" />
+    <label for="newServicePrice">Price (£)</label>
+    <input id="newServicePrice" type="number" min="0" step="0.01" />
+    <label for="newServiceOldPrice">Old Price (£)</label>
+    <input id="newServiceOldPrice" type="number" min="0" step="0.01" />
+    <label><input type="checkbox" id="newServiceActive" checked /> Active</label>
+    <label for="newServiceMaxQty">Max Quantity (1 or 2)</label>
+    <input id="newServiceMaxQty" type="number" min="1" max="2" step="1" value="1" />
+    <button id="addServiceBtn">Add Service</button>
+  </section>
+
+  <section id="passwordSection">
+    <h2>Admin Password</h2>
+    <label for="adminPasswordInput">Set / Change Password</label>
+    <input id="adminPasswordInput" type="password" />
+    <button id="setPasswordBtn">Save Password</button>
+  </section>
+</main>
+
+<script>
+  // SHA-256 helper
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+
+  // Elements
+  const loginScreen = document.getElementById('loginScreen');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginMessage = document.getElementById('loginMessage');
+  const adminPanel = document.getElementById('adminPanel');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Login state
+  let loggedIn = false;
+  let logoutTimer = null;
+  const AUTO_LOGOUT_MS = 10 * 60 * 1000; // 10 minutes
+
+  // Start inactivity timer
+  function startLogoutTimer() {
+    clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(() => {
+      alert("Logged out due to inactivity.");
+      doLogout();
+    }, AUTO_LOGOUT_MS);
+  }
+
+  // Reset timer on activity
+  ["mousemove","keydown","click","touchstart"].forEach(evt => {
+    document.addEventListener(evt, () => {
+      if (loggedIn) startLogoutTimer();
+    });
+  });
+
+  // Show admin panel
+  function showAdmin() {
+    loggedIn = true;
+    loginScreen.classList.add('hidden');
+    adminPanel.classList.remove('hidden');
+    logoutBtn.classList.remove('hidden');
+    startLogoutTimer();
+  }
+
+  // Logout
+  function doLogout() {
+    loggedIn = false;
+    adminPanel.classList.add('hidden');
+    logoutBtn.classList.add('hidden');
+    loginScreen.classList.remove('hidden');
+    loginPassword.value = "";
+    clearTimeout(logoutTimer);
+  }
+
+  logoutBtn.addEventListener('click', doLogout);
+
+  // Login check
+  loginBtn.addEventListener('click', async () => {
+    const pass = loginPassword.value.trim();
+    if (!pass) return;
+    const hash = await sha256(pass);
+    const savedHash = localStorage.getItem('adminPasswordHash');
+    if (!savedHash) {
+      loginMessage.textContent = "No password set. Please set one below.";
+      showAdmin();
+    } else if (hash === savedHash) {
+      showAdmin();
+    } else {
+      loginMessage.textContent = "Incorrect password.";
+    }
+  });
+
+  // Data helpers
+  function loadData() {
+    let raw = localStorage.getItem('servicesData');
+    if (!raw) {
+      return {
+        settings: { hourlyRate: 35, calloutFee: 20 },
+        services: {}
+      };
+    }
+    return JSON.parse(raw);
+  }
+  function saveData(data) {
+    localStorage.setItem('servicesData', JSON.stringify(data));
+  }
+
+  // Render services
+  const servicesContainer = document.getElementById('servicesContainer');
+  function renderServices(data) {
+    servicesContainer.innerHTML = '';
+    for (const key in data.services) {
+      const svc = data.services[key];
+      const div = document.createElement('div');
+      div.style.marginBottom = "12px";
+      div.innerHTML = `
+        <input type="text" value="${svc.name}" style="width:40%"> 
+        <input type="number" value="${svc.price}" style="width:20%"> 
+        <input type="number" value="${svc.oldPrice}" style="width:20%"> 
+        <input type="number" value="${svc.maxQty||1}" style="width:15%"> 
+        <label><input type="checkbox" ${svc.active?"checked":""}> Active</label>
+        <button data-key="${key}" class="removeBtn">Remove</button>
+      `;
+      servicesContainer.appendChild(div);
+    }
+  }
+
+  let servicesData = loadData();
+  renderServices(servicesData);
+
+  // Save password
+  document.getElementById('setPasswordBtn').addEventListener('click', async () => {
+    const pass = document.getElementById('adminPasswordInput').value.trim();
+    if (!pass) { alert("Enter password."); return; }
+    const hash = await sha256(pass);
+    localStorage.setItem('adminPasswordHash', hash);
+    alert("Password saved.");
+  });
+</script>
+</body>
+</html>
