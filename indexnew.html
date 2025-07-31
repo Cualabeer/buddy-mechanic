@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Booking</title>
+<style>
+  :root {
+    --lime: #a4d034;
+    --dark: #111;
+    --lightgray: #f4f4f4;
+    --red: #e43b3b;
+    --yellow: #e4c43b;
+    --green: #3be47c;
+  }
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--lightgray);
+    color: var(--dark);
+    overflow-x: hidden;
+  }
+  /* Container */
+  #start-screen {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #222;
+    position: relative;
+    overflow: visible;
+  }
+  /* Start button container with lights ring */
+  #start-button-wrapper {
+    position: relative;
+    width: 180px;
+    height: 180px;
+  }
+  #start-button {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--lime);
+    border: none;
+    border-radius: 50%;
+    width: 110px;
+    height: 110px;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--dark);
+    cursor: pointer;
+    box-shadow:
+      0 0 12px var(--lime),
+      inset 0 0 20px #c0e666;
+    transition: background 0.3s ease;
+    user-select: none;
+  }
+  #start-button:active {
+    background: #95c027;
+  }
+  /* Lights ring container */
+  .lights-ring {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    top: 0; left: 0;
+  }
+  /* Each light (dot) */
+  .light {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #333;
+    box-shadow: 0 0 8px #000 inset;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  /* Positions of 12 lights around circle */
+  /* Using 12 lights like a clock face */
+  .light:nth-child(1)  { top: 5%;    left: 50%;   transform: translate(-50%, 0); }
+  .light:nth-child(2)  { top: 15%;   left: 75%;   transform: translate(-50%, 0); }
+  .light:nth-child(3)  { top: 35%;   left: 90%;   transform: translate(-50%, 0); }
+  .light:nth-child(4)  { top: 60%;   left: 95%;   transform: translate(-50%, 0); }
+  .light:nth-child(5)  { top: 80%;   left: 85%;   transform: translate(-50%, 0); }
+  .light:nth-child(6)  { top: 90%;   left: 65%;   transform: translate(-50%, 0); }
+  .light:nth-child(7)  { top: 90%;   left: 35%;   transform: translate(-50%, 0); }
+  .light:nth-child(8)  { top: 80%;   left: 15%;   transform: translate(-50%, 0); }
+  .light:nth-child(9)  { top: 60%;   left: 5%;    transform: translate(-50%, 0); }
+  .light:nth-child(10) { top: 35%;   left: 10%;   transform: translate(-50%, 0); }
+  .light:nth-child(11) { top: 15%;   left: 25%;   transform: translate(-50%, 0); }
+  .light:nth-child(12) { top: 5%;    left: 50%;   transform: translate(-50%, 0); }
+
+  /* Progress bar at top */
+  #progress-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111;
+    padding: 10px 20px;
+    color: var(--lightgray);
+    font-weight: bold;
+    font-size: 14px;
+    user-select: none;
+  }
+  #progress-bar.hidden {
+    display: none;
+  }
+  .step {
+    flex-grow: 1;
+    position: relative;
+    text-align: center;
+    color: #666;
+  }
+  .step.active {
+    color: var(--lime);
+  }
+  .step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 100%;
+    height: 2px;
+    background: #555;
+    transform: translateY(-50%);
+    z-index: -1;
+  }
+  .step.active:not(:last-child)::after {
+    background: var(--lime);
+  }
+  .arrow {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--pos) * 100%);
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    color: var(--lime);
+    transition: left 0.4s ease;
+    pointer-events: none;
+  }
+
+  /* Booking container */
+  #booking-container {
+    padding: 20px;
+    max-width: 480px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    display: none;
+  }
+
+  /* Terms container */
+  #terms-container {
+    padding: 20px;
+    max-width: 480px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    display: none;
+  }
+  #terms-container label {
+    display: flex;
+    align-items: center;
+  }
+  #terms-container input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+  }
+  #terms-container button {
+    margin-top: 15px;
+    background: var(--lime);
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    color: var(--dark);
+    width: 100%;
+  }
+  #terms-container button:disabled {
+    background: #999;
+    cursor: not-allowed;
+  }
+
+  /* Booking form inputs */
+  #booking-form label {
+    display: block;
+    margin-top: 15px;
+  }
+  #booking-form input, #booking-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 6px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  #booking-form input::placeholder {
+    font-style: italic;
+    color: #aaa;
+  }
+  #booking-form button.submit-btn {
+    margin-top: 20px;
+    background: var(--lime);
+    border: none;
+    padding: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    color: var(--dark);
+    width: 100%;
+  }
+  #booking-form button.submit-btn:disabled {
+    background: #999;
+    cursor: not-allowed;
+  }
+
+  /* Floating cart */
+  #floating-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--lime);
+    color: var(--dark);
+    padding: 15px 20px;
+    border-radius: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    user-select: none;
+    min-width: 220px;
+    max-width: 320px;
+  }
+  #floating-cart:hover {
+    background: #9acf38;
+  }
+  #cart-close {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--dark);
+  }
+
+  /* Number plate styling */
+  #cart-plate {
+    background: #eee;
+    border: 2px solid #333;
+    padding: 6px 10px;
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-weight: 900;
+    letter-spacing: 4px;
+    font-size: 20px;
+    margin-bottom: 8px;
+    user-select: text;
+    text-align: center;
+  }
+  #cart-services {
+    margin-top: 8px;
+  }
+  #cart-services div {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid #ccc;
+  }
+  #cart-services div span.price {
+    color: red;
+    font-weight: 900;
+  }
+  #cart-summary {
+    margin-top: 10px;
+    border-top: 1px solid #999;
+    padding-top: 8px;
+  }
+  #cart-summary div {
+    display: flex;
+    justify-content: space-between;
+  }
+  #cart-summary div span {
+    font-weight: bold;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Start screen -->
+<div id="start-screen">
+  <div id="start-button-wrapper" aria-label="Start booking button with diagnostic lights">
+    <button id="start-button" aria-pressed="false" aria-label="Start booking">START</button>
+    <div class="lights-ring" aria-hidden="true">
+      <!-- 12 lights -->
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div id="progress-bar" class="hidden" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1">
+  <div class="step active" data-step="start">Start</div>
+  <div class="step" data-step="terms">Terms</div>
+  <div class="step" data-step="plate">Plate</div>
+  <div class="step" data-step="services">Services</div>
+  <div class="step" data-step="confirm">Confirm</div>
+  <div class="arrow" style="--pos:0;"></div>
+</div>
+
+<!-- Terms container -->
+<div id="terms-container" style="display:none;">
+  <div id="terms-content" class="card">
+    <h2>Terms and Conditions</h2>
+    <label><input type="checkbox" id="agree-terms" /> I agree to the terms and conditions</label>
+    <button id="terms-continue" disabled>Continue</button>
+  </div>
+</div>
+
+<!-- Booking container -->
+<div id="booking-container" style="display:none;">
+  <form id="booking-form" novalidate>
+    <h2>Booking Details</h2>
+
+    <label for="number-plate">Number Plate</label>
+    <input type="text" id="number-plate" name="number-plate" placeholder="e.g. AB12 CDE" autocomplete="off" required pattern="[A-Z0-9 ]{1,10}" style="text-transform:uppercase; font-weight:900; letter-spacing:4px;" />
+
+    <label for="address">Address</label>
+    <input type="text" id="address" name="address" placeholder="Loading location..." autocomplete="street-address" />
+
+    <label for="make">Car Make</label>
+    <input type="text" id="make" name="make" placeholder="e.g. BMW" autocomplete="off" />
+
+    <label for="model">Car Model</label>
+    <input type="text" id="model" name="model" placeholder="e.g. 320i" autocomplete="off" />
+
+    <fieldset id="services-fieldset">
+      <legend>Select Services</legend>
+      <!-- Services checkboxes dynamically inserted here -->
+    </fieldset>
+
+    <button type="submit" class="submit-btn" disabled>Confirm Booking</button>
+  </form>
+</div>
+
+<!-- Floating cart -->
+<div id="floating-cart" role="region" aria-label="Booking cart" tabindex="0" style="display:none;">
+  <span id="cart-close" aria-label="Close cart" role="button" tabindex="0" title="Close cart">&times;</span>
+  <div id="cart-plate" aria-live="polite" aria-atomic="true"></div>
+  <div id="cart-services" aria-live="polite" aria-atomic="true"></div>
+  <div id="cart-summary"></div>
+</div>
+
+<script>
+  // State
+  const lights = [...document.querySelectorAll(".light")];
+  const startScreen = document.getElementById("start-screen");
+  const startButton = document.getElementById("start-button");
+  const progressBar = document.getElementById("progress-bar");
+  const steps = [...progressBar.querySelectorAll(".step")];
+  const arrow = progressBar.querySelector(".arrow");
+  const termsContainer = document.getElementById("terms-container");
+  const termsCheckbox = document.getElementById("agree-terms");
+  const termsContinueBtn = document.getElementById("terms-continue");
+  const bookingContainer = document.getElementById("booking-container");
+  const bookingForm = document.getElementById("booking-form");
+  const floatingCart = document.getElementById("floating-cart");
+  const cartClose = document.getElementById("cart-close");
+  const cartPlate = document.getElementById("cart-plate");
+  const cartServices = document.getElementById("cart-services");
+  const cartSummary = document.getElementById("cart-summary");
+  const numberPlateInput = document.getElementById("number-plate");
+  const addressInput = document.getElementById("address");
+  const makeInput = document.getElementById("make");
+  const modelInput = document.getElementById("model");
+  const servicesFieldset = document.getElementById("services-fieldset");
+  const submitBtn = bookingForm.querySelector(".submit-btn");
+
+  // Progress steps order
+  const stepsOrder = ["start","terms","plate","services","confirm"];
+  let currentStepIndex = 0;
+
+  // Booking data & services
+  let bookingData = {
+    plate: "",
+    address: "",
+    make: "",
+    model: "",
+    services: [],
+  };
+
+  let gpsAddress = "";
+
+  // Sample services (could load from admin or elsewhere)
+  const servicesList = [
+    {name:"Basic Service", price:60, usual:80},
+    {name:"MOT Pre-check", price:30, usual:40},
+    {name:"Oil Change", price:40, usual:55},
+    {name:"Brake Inspection", price:35, usual:50},
+    {name:"Call-out Fee", price:20, usual:20, mandatory:true}
+  ];
+
+  // Populate services checkboxes
+  function renderServices() {
+    servicesFieldset.innerHTML = "";
+    servicesList.forEach((s,i) => {
+      const id = `service-${i}`;
+      const checked = s.mandatory ? "checked disabled" : "";
+      const disabledAttr = s.mandatory ? "disabled" : "";
+      const label = document.createElement("label");
+      label.style.display = "block";
+      label.style.marginBottom = "8px";
+      label.innerHTML = `
+        <input type="checkbox" id="${id}" name="services" value="${i}" ${checked} ${disabledAttr} />
+        ${s.name} — <span style="color:red;font-weight:900;">£${s.price}</span> <small style="color:#555; font-style:italic;">(Usually £${s.usual})</small>
+      `;
+      servicesFieldset.appendChild(label);
+    });
+  }
+
+  renderServices();
+
+  // Update progress UI
+  function updateProgress(step) {
+    currentStepIndex = stepsOrder.indexOf(step);
+    steps.forEach((el, i) => {
+      el.classList.toggle("active", i <= currentStepIndex);
+    });
+    arrow.style.setProperty("--pos", currentStepIndex / (stepsOrder.length - 1));
+    progressBar.setAttribute("aria-valuenow", currentStepIndex + 1);
+  }
+
+  // Animate lights ring after pressing start
+  async function startButtonAnimation() {
+    // Flash all lights red & yellow 3 times
+    const flashCount = 3;
+    for(let i=0; i<flashCount; i++) {
+      setLightsColor("red");
+      await delay(400);
+      setLightsColor("yellow");
+      await delay(400);
+    }
+    // Then light green sequentially
+    for(let i=0; i<lights.length; i++) {
+      setLightColor(i, "green");
+      await delay(250);
+    }
+  }
+
+  // Helpers to set lights colors
+  function setLightsColor(color) {
+    lights.forEach(light => {
+      light.style.backgroundColor = colorMap(color);
+      light.style.boxShadow = `0 0 12px ${colorMap(color)}`;
+    });
+  }
+  function setLightColor(index, color) {
+    if(index < 0 || index >= lights.length) return;
+    lights[index].style.backgroundColor = colorMap(color);
+    lights[index].style.boxShadow = `0 0 12px ${colorMap(color)}`;
+  }
+  function colorMap(color) {
+    switch(color) {
+      case "red": return "rgb(228,59,59)";
+      case "yellow": return "rgb(228,196,59)";
+      case "green": return "rgb(59,228,124)";
+      case "off": return "#333";
+      default: return "#333";
+    }
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Fade out start screen
+  function fadeOutStartScreen() {
+    return new Promise(resolve => {
+      startScreen.style.transition = "opacity 0.8s ease";
+      startScreen.style.opacity = 0;
+      setTimeout(() => {
+        startScreen.style.display = "none";
+        resolve();
+      }, 800);
+    });
+  }
+
+  // Request geolocation and reverse geocode
+  async function fetchGPSAddress() {
+    if (!navigator.geolocation) {
+      addressInput.placeholder = "Geolocation not supported";
+      return "";
+    }
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(async position => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        // Call Nominatim reverse geocode
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+          const res = await fetch(url, {
+            headers: { "User-Agent": "EyBuddyBooking/1.0" }
+          });
+          if (!res.ok) throw new Error("Reverse geocode failed");
+          const data = await res.json();
+          const displayAddress = data.display_name || "";
+          resolve(displayAddress);
+        } catch {
+          resolve("");
+        }
+      }, () => {
+        // Geolocation permission denied or error
+        resolve("");
+      }, {timeout:10000});
+    });
+  }
+
+  // Show terms container
+  function showTerms() {
+    updateProgress("terms");
+    progressBar.classList.remove("hidden");
+    termsContainer.style.display = "block";
+    bookingContainer.style.display = "none";
+    floatingCart.style.display = "none";
+  }
+
+  // Show booking form
+  function showBookingForm() {
+    updateProgress("plate");
+    termsContainer.style.display = "none";
+    bookingContainer.style.display = "block";
+    floatingCart.style.display = bookingData.services.length ? "block" : "none";
+    numberPlateInput.focus();
+  }
+
+  // Show services step
+  function showServicesStep() {
+    updateProgress("services");
+    // focus first service checkbox if any
+  }
+
+  // Show confirm step
+  function showConfirmStep() {
+    updateProgress("confirm");
+  }
+
+  // Validate form and enable submit button
+  function validateForm() {
+    const plateValid = numberPlateInput.checkValidity();
+    const servicesSelected = bookingData.services.length > 0;
+    submitBtn.disabled = !(plateValid && servicesSelected);
+  }
+
+  // Update cart UI
+  function updateCart() {
+    if(!bookingData.plate) {
+      floatingCart.style.display = "none";
+      return;
+    }
+    cartPlate.textContent = bookingData.plate.toUpperCase();
+    // List services
+    cartServices.innerHTML = "";
+    bookingData.services.forEach(idx => {
+      const s = servicesList[idx];
+      const div = document.createElement("div");
+      div.innerHTML = `${s.name} <span class="price">£${s.price}</span>`;
+      cartServices.appendChild(div);
+    });
+    // Summary + savings
+    const total = bookingData.services.reduce((sum, i) => sum + servicesList[i].price, 0);
+    const usualTotal = bookingData.services.reduce((sum, i) => sum + (servicesList[i].usual || 0), 0);
+    const saving = Math.max(0, usualTotal - total);
+    cartSummary.innerHTML = `
+      <div><span>Total:</span> <span>£${total.toFixed(2)}</span></div>
+      <div><span>You Save:</span> <span>£${saving.toFixed(2)}</span></div>
+    `;
+    floatingCart.style.display = "block";
+  }
+
+  // Initialize listeners
+  function initListeners() {
+    // Start button pressed
+    startButton.addEventListener("click", async () => {
+      startButton.disabled = true;
+      // Run animation and fetch GPS in parallel
+      const gpsPromise = fetchGPSAddress().then(addr => {
+        gpsAddress = addr;
+      });
+      await startButtonAnimation();
+      await gpsPromise;
+      // Prefill address if available
+      if(gpsAddress) {
+        addressInput.value = gpsAddress;
+        addressInput.placeholder = "";
+      } else {
+        addressInput.placeholder = "Please enter your address";
+      }
+      // Fade out start screen
+      await fadeOutStartScreen();
+      // Show terms next
+      showTerms();
+    });
+
+    // Terms checkbox toggle continue button
+    termsCheckbox.addEventListener("change", () => {
+      termsContinueBtn.disabled = !termsCheckbox.checked;
+    });
+
+    // Continue from terms to booking form
+    termsContinueBtn.addEventListener("click", () => {
+      updateProgress("plate");
+      showBookingForm();
+    });
+
+    // Number plate input updates bookingData and cart
+    numberPlateInput.addEventListener("input", (e) => {
+      bookingData.plate = e.target.value.toUpperCase();
+      updateCart();
+      validateForm();
+    });
+
+    // Address input updates bookingData
+    addressInput.addEventListener("input", (e) => {
+      bookingData.address = e.target.value;
+    });
+
+    // Make input
+    makeInput.addEventListener("input", (e) => {
+      bookingData.make = e.target.value;
+    });
+
+    // Model input
+    modelInput.addEventListener("input", (e) => {
+      bookingData.model = e.target.value;
+    });
+
+    // Services selection
+    servicesFieldset.addEventListener("change", (e) => {
+      const checkedBoxes = [...servicesFieldset.querySelectorAll("input[type=checkbox]:checked:not([disabled])")];
+      bookingData.services = checkedBoxes.map(cb => Number(cb.value));
+      updateCart();
+      validateForm();
+    });
+
+    // Form submit handler
+    bookingForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("Booking confirmed! We will contact you shortly.");
+      // TODO: send booking data to backend or email
+      bookingForm.reset();
+      bookingData.services = [];
+      updateCart();
+      submitBtn.disabled = true;
+    });
+
+    // Floating cart close button
+    cartClose.addEventListener("click", () => {
+      floatingCart.style.display = "none";
+    });
+  }
+
+  // Initialize page
+  function init() {
+    updateProgress("start");
+    initListeners();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
