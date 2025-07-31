@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Booking</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+  :root {
+    --lime-green: #A4DE02;
+    --deep-blue: #204E8B;
+    --dark-bg: #111214;
+    --light-bg: #f7f9fa;
+    --orange: #FFA500;
+    --yellow: #FFD700;
+    --red: #ff3b3b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body, html {
+    margin: 0; padding: 0;
+    height: 100vh;
+    font-family: 'Orbitron', monospace, Arial, sans-serif;
+    background: var(--light-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    width: 100%;
+    max-width: 600px;
+    height: 60px;
+    background: var(--deep-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lime-green);
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    margin-bottom: 6px;
+  }
+
+  #dashboard {
+    height: 15vh;
+    width: 100%;
+    max-width: 600px;
+    background: var(--dark-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    padding: 0 20px;
+    transition: opacity 1s ease;
+  }
+
+  #lights {
+    display: flex;
+    gap: 25px;
+  }
+
+  .light {
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    background: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+  }
+  .light svg { width: 28px; height: 28px; }
+  .oil svg path { fill: var(--red); }
+  .engine svg path { fill: var(--yellow); }
+  .fuel svg path { fill: var(--orange); }
+  .abs svg path { fill: var(--yellow); }
+
+  .flash { animation: flashLights 1s ease-in-out 2; }
+  @keyframes flashLights {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.1; }
+  }
+
+  #mainContent {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #startButtonWrapper {
+    position: relative;
+    width: 160px; height: 160px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #startButtonWrapper::before {
+    content:"";
+    position:absolute;
+    width:200px; height:200px;
+    border-radius:50%;
+    border:4px solid var(--lime-green);
+    animation:pulse 2s infinite;
+  }
+  #startButton {
+    width:160px; height:160px;
+    border-radius:50%;
+    display:flex; justify-content:center; align-items:center;
+    background: radial-gradient(circle, var(--deep-blue) 50%, var(--lime-green) 95%);
+    color:#fff; font-weight:bold; font-size: 1.5rem;
+    letter-spacing:3px;
+    z-index: 2;
+    transition: transform 0.3s ease;
+  }
+  @keyframes pulse {
+    0%,100%{box-shadow:0 0 15px var(--lime-green);}
+    50%{box-shadow:0 0 35px var(--lime-green);}
+  }
+
+  @keyframes turnkeyRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(720deg); }
+  }
+
+  #modalOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  #modal {
+    background:#fff; padding:20px;
+    border-radius:10px; max-width:400px;
+  }
+
+  #bookingContainer {
+    display:none;
+    width: 100%; max-width:600px;
+    background:#fff; padding:25px;
+    border-radius:12px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.1);
+  }
+  form { display: flex; flex-direction: column; gap: 12px; }
+  input, select, textarea {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  button[type="submit"] {
+    background: var(--deep-blue);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    font-size: 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* Floating Cart */
+  #cartButton {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--deep-blue) 50%, var(--lime-green) 95%);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--lime-green);
+    z-index: 200;
+  }
+  #cartButton span {
+    background: red;
+    color: #fff;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 0.9rem;
+    margin-left: 4px;
+  }
+
+  #cartOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    justify-content: flex-end;
+    align-items: flex-end;
+    z-index: 300;
+  }
+  #cartPanel {
+    width: 100%;
+    max-height: 60%;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  #cartPanel h2 { margin-top: 0; }
+  #cartItems { list-style: none; padding: 0; }
+  #cartItems li { 
+    margin: 8px 0; 
+    font-size: 1.1rem; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+  }
+  #cartItems li button {
+    background: red;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .total { font-size: 1.3rem; font-weight: bold; margin-top: 10px; }
+  #confirmCart {
+    width: 100%;
+    margin-top: 10px;
+    background: var(--deep-blue);
+    color: white;
+    padding: 12px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>EY BUDDY</header>
+
+<div id="dashboard">
+  <div id="lights">
+    <div class="light oil"><svg viewBox="0 0 24 24"><path d="M6 18h12v-2H6v2z"/></svg></div>
+    <div class="light engine"><svg viewBox="0 0 24 24"><path d="M16 6V4H8v2H2v14h20V6h-6z"/></svg></div>
+    <div class="light fuel"><svg viewBox="0 0 24 24"><path d="M6 19h8v-6H6v6z"/></svg></div>
+    <div class="light abs"><svg viewBox="0 0 24 24"><path d="M19 13h-2v2h-2v-2h-2v2H9v-2H7v-2h2v-2h2v2h2v-2h2v2h2v2z"/></svg></div>
+  </div>
+</div>
+
+<div id="mainContent">
+  <div id="startButtonWrapper">
+    <div id="startButton">START</div>
+  </div>
+</div>
+
+<!-- Terms modal -->
+<div id="modalOverlay">
+  <div id="modal">
+    <h2>Terms & Conditions</h2>
+    <p>By booking with Ey Buddy you agree to our terms and conditions.</p>
+    <button id="declineBtn">Decline</button>
+    <button id="agreeBtn">Agree</button>
+  </div>
+</div>
+
+<!-- Booking -->
+<div id="bookingContainer">
+  <h1>Ey Buddy Booking Form</h1>
+  <form id="bookingForm">
+    <label>Name *</label><input type="text" required />
+    <label>Phone *</label><input type="tel" required />
+    <label>Email *</label><input type="email" required />
+    <label>Vehicle *</label><input type="text" required />
+    <label>Service Required *</label>
+    <select required id="serviceSelect">
+      <option value="">-- Select Service --</option>
+      <option>Diagnostics</option>
+      <option>Repair</option>
+      <option>Maintenance</option>
+    </select>
+    <label>Date *</label><input type="date" required />
+    <label>Preferred Time *</label><input type="time" required />
+    <label>Additional Notes</label><textarea rows="4"></textarea>
+    <button type="submit">Book Now</button>
+  </form>
+</div>
+
+<!-- Floating Cart -->
+<div id="cartButton">🛒 <span id="cartCount">0</span></div>
+<div id="cartOverlay">
+  <div id="cartPanel">
+    <h2>Your Cart</h2>
+    <ul id="cartItems"></ul>
+    <p class="total">Total: £<span id="cartTotal">0</span></p>
+    <button id="confirmCart">Confirm Booking</button>
+  </div>
+</div>
+
+<script>
+  const startBtn = document.getElementById('startButtonWrapper');
+  const lights = document.querySelectorAll('.light');
+  const dashboard = document.getElementById('dashboard');
+  const modal = document.getElementById('modalOverlay');
+  const agree = document.getElementById('agreeBtn');
+  const decline = document.getElementById('declineBtn');
+  const booking = document.getElementById('bookingContainer');
+  const mainContent = document.getElementById('mainContent');
+  const bookingForm = document.getElementById('bookingForm');
+
+  const cartButton = document.getElementById('cartButton');
+  const cartOverlay = document.getElementById('cartOverlay');
+  const cartItemsEl = document.getElementById('cartItems');
+  const cartTotalEl = document.getElementById('cartTotal');
+  const cartCountEl = document.getElementById('cartCount');
+  const confirmCartBtn = document.getElementById('confirmCart');
+  const serviceSelect = document.getElementById('serviceSelect');
+
+  let cart = [];
+  const servicePrices = { "Diagnostics": 50, "Repair": 100, "Maintenance": 80 };
+
+  function resetDashboard() {
+    dashboard.style.display = "flex";
+    dashboard.style.opacity = "1";
+    lights.forEach(l => l.classList.remove('flash'));
+    mainContent.style.display = "flex";
+    booking.style.display = "none";
+    cartButton.style.display = "none";
+    cartOverlay.style.display = "none";
+    cart = [];
+    updateCart();
+  }
+
+  startBtn.addEventListener('click', () => {
+    lights.forEach(l => l.classList.add('flash'));
+    const startButton = document.getElementById('startButton');
+    startButton.style.animation = 'turnkeyRotate 2s linear forwards';
+
+    setTimeout(() => {
+      dashboard.style.opacity = "0";
+    }, 2000);
+
+    setTimeout(() => {
+      modal.style.display = "flex";
+      startButton.style.animation = '';
+    }, 3000);
+  });
+
+  agree.onclick = () => {
+    modal.style.display = "none";
+    dashboard.style.display = "none";
+    mainContent.style.display = "none";
+    booking.style.display = "block";
+    cartButton.style.display = "none"; // hidden until service selected
+  };
+
+  decline.onclick = () => {
+    modal.style.display = "none";
+    resetDashboard();
+  };
+
+  bookingForm.onsubmit = (e) => {
+    e.preventDefault();
+    alert("Booking submitted!");
+    resetDashboard();
+  };
+
+  cartButton.onclick = () => {
+    cartOverlay.style.display = cartOverlay.style.display === "flex" ? "none" : "flex";
+  };
+
+  serviceSelect.addEventListener("change", (e) => {
+    const service = e.target.value;
+    if (service && !cart.includes(service)) {
+      cart.push(service);
+      updateCart();
+    }
+    // Show cart button only if there's at least one service in the cart
+    if (cart.length > 0) {
+      cartButton.style.display = "flex";
+    } else {
+      cartButton.style.display = "none";
+    }
+  });
+
+  function updateCart() {
+    cartItemsEl.innerHTML = "";
+    let total = 0;
+    cart.forEach(service => {
+      const price = servicePrices[service] || 0;
+      total += price;
+      const li = document.createElement("li");
+      li.textContent = `${service} - £${price}`;
+
+      // Remove button
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "×";
+      removeBtn.title = "Remove service";
+      removeBtn.onclick = () => {
+        cart = cart.filter(s => s !== service);
+        updateCart();
+        // Hide cart button if empty
+        if (cart.length === 0) {
+          cartButton.style.display = "none";
+          cartOverlay.style.display = "none";
+        }
+      };
+      li.appendChild(removeBtn);
+
+      cartItemsEl.appendChild(li);
+    });
+    cartTotalEl.textContent = total;
+    cartCountEl.textContent = cart.length;
+  }
+
+  confirmCartBtn.onclick = () => {
+    if (cart.length === 0) {
+      alert("Please select at least one service.");
+      return;
+    }
+    alert("Services confirmed: " + cart.join(", ") + ". Total: £" + cartTotalEl.textContent);
+    cartOverlay.style.display = "none";
+  };
+
+  // Initialize
+  resetDashboard();
+</script>
+
+</body>
+</html>
