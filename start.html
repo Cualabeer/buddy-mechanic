@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Booking</title>
+<style>
+  /* Basic resets */
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f0f4f9;
+    color: #222;
+  }
+  /* Container full height */
+  #start-screen {
+    height: 100vh;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    background: #222;
+    position: relative;
+  }
+
+  /* Start button wrapper with lights */
+  #start-button-wrapper {
+    position: relative;
+    width: 180px; height: 180px;
+  }
+  #start-button {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    font-size: 24px;
+    background: #a4d034;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 12px #a4d034 inset;
+    color: #111;
+    font-weight: bold;
+    user-select: none;
+  }
+  .lights-ring {
+    position: absolute;
+    width: 180px; height: 180px;
+    top: 0; left: 0;
+  }
+  .light {
+    position: absolute;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #333;
+    box-shadow: 0 0 8px #000 inset;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  /* Positions for 12 lights */
+  .light:nth-child(1)  { top: 5%; left: 50%; transform: translate(-50%, 0); }
+  .light:nth-child(2)  { top: 15%; left: 75%; transform: translate(-50%, 0); }
+  .light:nth-child(3)  { top: 35%; left: 90%; transform: translate(-50%, 0); }
+  .light:nth-child(4)  { top: 60%; left: 95%; transform: translate(-50%, 0); }
+  .light:nth-child(5)  { top: 80%; left: 85%; transform: translate(-50%, 0); }
+  .light:nth-child(6)  { top: 90%; left: 65%; transform: translate(-50%, 0); }
+  .light:nth-child(7)  { top: 90%; left: 35%; transform: translate(-50%, 0); }
+  .light:nth-child(8)  { top: 80%; left: 15%; transform: translate(-50%, 0); }
+  .light:nth-child(9)  { top: 60%; left: 5%;  transform: translate(-50%, 0); }
+  .light:nth-child(10) { top: 35%; left: 10%; transform: translate(-50%, 0); }
+  .light:nth-child(11) { top: 15%; left: 25%; transform: translate(-50%, 0); }
+  .light:nth-child(12) { top: 5%;  left: 50%; transform: translate(-50%, 0); }
+
+  /* Hidden initially */
+  #terms-container, #booking-container, #floating-cart {
+    display: none;
+  }
+
+  /* Terms container style */
+  #terms-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  /* Booking container style */
+  #booking-container {
+    padding: 20px;
+    max-width: 700px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  /* Floating cart style */
+  #floating-cart {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: #a4d034;
+    color: #111;
+    padding: 15px 20px;
+    border-radius: 40px;
+    box-shadow: 0 0 12px #a4d034;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    user-select: none;
+  }
+  #cart-plate {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    padding: 4px 12px;
+    background: white;
+    color: #222;
+    border-radius: 4px;
+  }
+  #cart-total {
+    font-size: 18px;
+  }
+  #cart-close {
+    background: #e44c4c;
+    color: white;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    text-align: center;
+    line-height: 24px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Start screen -->
+<div id="start-screen" role="main" aria-label="Start booking screen">
+  <div id="start-button-wrapper" aria-label="Start booking button with diagnostic lights">
+    <button id="start-button" aria-pressed="false" aria-label="Start booking">START</button>
+    <div class="lights-ring" aria-hidden="true">
+      <div class="light"></div><div class="light"></div><div class="light"></div><div class="light"></div>
+      <div class="light"></div><div class="light"></div><div class="light"></div><div class="light"></div>
+      <div class="light"></div><div class="light"></div><div class="light"></div><div class="light"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Terms and conditions -->
+<div id="terms-container" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+  <h2 id="terms-title">Terms and Conditions</h2>
+  <p>Please agree to our terms and conditions to proceed with booking.</p>
+  <label><input type="checkbox" id="terms-checkbox" /> I agree to the terms and conditions</label>
+  <br/><br/>
+  <button id="terms-continue" disabled>Continue</button>
+</div>
+
+<!-- Booking form -->
+<div id="booking-container" role="form" aria-label="Booking form">
+  <h2>Booking Details</h2>
+  <form id="booking-form">
+    <label for="number-plate">Vehicle Number Plate:</label><br/>
+    <input id="number-plate" name="number-plate" type="text" maxlength="10" required 
+      placeholder="e.g. AB12 CDE" style="text-transform:uppercase;" autocomplete="off" /><br/><br/>
+      
+    <label for="address">Address:</label><br/>
+    <input id="address" name="address" type="text" placeholder="Enter your address" autocomplete="street-address"/><br/><br/>
+
+    <label for="make">Car Make:</label><br/>
+    <input id="make" name="make" type="text" placeholder="e.g. BMW" autocomplete="off" /><br/><br/>
+
+    <label for="model">Car Model:</label><br/>
+    <input id="model" name="model" type="text" placeholder="e.g. 3 Series" autocomplete="off" /><br/><br/>
+
+    <fieldset id="services-fieldset">
+      <legend>Select Services (max 2):</legend>
+      <label><input type="checkbox" name="services" value="0" /> Oil Change (£39) <span style="color:green;">Save £10</span></label><br/>
+      <label><input type="checkbox" name="services" value="1" /> MOT Pre-check (£49) <span style="color:green;">Save £15</span></label><br/>
+      <label><input type="checkbox" name="services" value="2" /> Brake Inspection (£29) <span style="color:green;">Save £5</span></label><br/>
+      <label><input type="checkbox" name="services" value="3" /> Full Service (£99) <span style="color:green;">Save £20</span></label><br/>
+      <label><input type="checkbox" name="services" value="4" /> Air Filter Replacement (£25) <span style="color:green;">Save £7</span></label><br/>
+    </fieldset>
+    <br/>
+    <button type="submit" id="submit-btn" disabled>Book Now</button>
+  </form>
+</div>
+
+<!-- Floating Cart -->
+<div id="floating-cart" aria-label="Booking summary" role="complementary" tabindex="0">
+  <div id="cart-plate">—</div>
+  <div id="cart-total">£0.00</div>
+  <div id="cart-close" aria-label="Close cart" role="button" tabindex="0">×</div>
+</div>
+
+<script>
+  const startScreen = document.getElementById("start-screen");
+  const startButton = document.getElementById("start-button");
+  const lights = [...document.querySelectorAll(".light")];
+
+  const termsContainer = document.getElementById("terms-container");
+  const termsCheckbox = document.getElementById("terms-checkbox");
+  const termsContinueBtn = document.getElementById("terms-continue");
+
+  const bookingContainer = document.getElementById("booking-container");
+  const bookingForm = document.getElementById("booking-form");
+  const numberPlateInput = document.getElementById("number-plate");
+  const addressInput = document.getElementById("address");
+  const makeInput = document.getElementById("make");
+  const modelInput = document.getElementById("model");
+  const servicesFieldset = document.getElementById("services-fieldset");
+  const submitBtn = document.getElementById("submit-btn");
+
+  const floatingCart = document.getElementById("floating-cart");
+  const cartPlate = document.getElementById("cart-plate");
+  const cartTotal = document.getElementById("cart-total");
+  const cartClose = document.getElementById("cart-close");
+
+  // Services data
+  const servicesList = [
+    { name: "Oil Change", price: 39, usual: 49 },
+    { name: "MOT Pre-check", price: 49, usual: 64 },
+    { name: "Brake Inspection", price: 29, usual: 34 },
+    { name: "Full Service", price: 99, usual: 119 },
+    { name: "Air Filter Replacement", price: 25, usual: 32 }
+  ];
+
+  // Booking data state
+  let bookingData = {
+    plate: "",
+    address: "",
+    make: "",
+    model: "",
+    services: []
+  };
+
+  // Map colors for lights
+  function colorMap(color) {
+    switch(color) {
+      case "red": return "rgb(228,59,59)";
+      case "yellow": return "rgb(228,196,59)";
+      case "green": return "rgb(59,228,124)";
+      case "off": return "#333";
+      default: return "#333";
+    }
+  }
+
+  // Set all lights color
+  function setLightsColor(color) {
+    lights.forEach(light => {
+      light.style.backgroundColor = colorMap(color);
+      light.style.boxShadow = `0 0 12px ${colorMap(color)}`;
+    });
+  }
+
+  // Set a single light color
+  function setLightColor(index, color) {
+    if(index < 0 || index >= lights.length) return;
+    lights[index].style.backgroundColor = colorMap(color);
+    lights[index].style.boxShadow = `0 0 12px ${colorMap(color)}`;
+  }
+
+  // Delay helper
+  function delay(ms) {
+    return new Promise(res => setTimeout(res, ms));
+  }
+
+  // Animation for start button
+  async function startAnimation() {
+    startButton.disabled = true;
+    // Flash red/yellow 3 times
+    for(let i=0; i<3; i++) {
+      setLightsColor("red");
+      await delay(400);
+      setLightsColor("yellow");
+      await delay(400);
+    }
+    // Sequential green
+    for(let i=0; i<lights.length; i++) {
+      setLightColor(i, "green");
+      await delay(250);
+    }
+  }
+
+  // Show terms container
+  function showTerms() {
+    startScreen.style.display = "none";
+    termsContainer.style.display = "block";
+  }
+
+  // Update cart UI
+  function updateCart() {
+    if(!bookingData.plate) {
+      floatingCart.style.display = "none";
+      return;
+    }
+    floatingCart.style.display = "flex";
+    cartPlate.textContent = bookingData.plate.toUpperCase();
+    // Calculate total and savings
+    const total = bookingData.services.reduce((sum, i) => sum + servicesList[i].price, 0);
+    const usualTotal = bookingData.services.reduce((sum, i) => sum + (servicesList[i].usual || 0), 0);
+    const saving = Math.max(0, usualTotal - total);
+    cartTotal.innerHTML = `£${total.toFixed(2)} <span style="color:green; margin-left:8px;">(Save £${saving.toFixed(2)})</span>`;
+  }
+
+  // Validate form
+  function validateForm() {
+    const plateValid = numberPlateInput.checkValidity();
+    const servicesSelected = bookingData.services.length > 0;
+    submitBtn.disabled = !(plateValid && servicesSelected);
+  }
+
+  // Initialize event listeners
+  function initListeners() {
+    // Start button click
+    startButton.addEventListener("click", async () => {
+      await startAnimation();
+      showTerms();
+    });
+
+    // Terms checkbox toggle continue button
+    termsCheckbox.addEventListener("change", () => {
+      termsContinueBtn.disabled = !termsCheckbox.checked;
+    });
+
+    // Continue from terms to booking form
+    termsContinueBtn.addEventListener("click", () => {
+      termsContainer.style.display = "none";
+      bookingContainer.style.display = "block";
+      numberPlateInput.focus();
+    });
+
+    // Number plate input updates bookingData and cart
+    numberPlateInput.addEventListener("input", e => {
+      bookingData.plate = e.target.value.toUpperCase();
+      updateCart();
+      validateForm();
+    });
+
+    // Address input
+    addressInput.addEventListener("input", e => {
+      bookingData.address = e.target.value;
+    });
+
+    // Make input
+    makeInput.addEventListener("input", e => {
+      bookingData.make = e.target.value;
+    });
+
+    // Model input
+    modelInput.addEventListener("input", e => {
+      bookingData.model = e.target.value;
+    });
+
+    // Services selection (max 2)
+    servicesFieldset.addEventListener("change", e => {
+      const checkedBoxes = [...servicesFieldset.querySelectorAll("input[type=checkbox]:checked:not([disabled])")];
+      // Enforce max 2 selected
+      if(checkedBoxes.length > 2) {
+        e.target.checked = false;
+        return;
+      }
+      bookingData.services = checkedBoxes.map(cb => Number(cb.value));
+      updateCart();
+      validateForm();
+    });
+
+    // Form submission
+    bookingForm.addEventListener("submit", e => {
+      e.preventDefault();
+      alert("Booking confirmed! We will contact you shortly.");
+      bookingForm.reset();
+      bookingData = { plate:"", address:"", make:"", model:"", services:[] };
+      updateCart();
+      submitBtn.disabled = true;
+      bookingContainer.style.display = "none";
+      startScreen.style.display = "flex";
+      setLightsColor("off");
+      startButton.disabled = false;
+      termsCheckbox.checked = false;
+      termsContinueBtn.disabled = true;
+    });
+
+    // Floating cart close
+    cartClose.addEventListener("click", () => {
+      floatingCart.style.display = "none";
+    });
+  }
+
+  // Init page
+  function init() {
+    setLightsColor("off");
+    updateCart();
+    initListeners();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
