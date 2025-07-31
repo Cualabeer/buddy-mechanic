@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Admin Panel</title>
+<style>
+  /* Base */
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    color: #001f3f;
+  }
+  h1, h2 {
+    color: #003366;
+  }
+  button {
+    background: #a0d911; /* lime green */
+    border: none;
+    color: #001f3f;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #89c92d;
+  }
+  input[type=text], input[type=number], input[type=password] {
+    padding: 8px 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 4px;
+    margin-bottom: 12px;
+  }
+  label {
+    font-weight: 600;
+    margin-top: 12px;
+    display: block;
+  }
+  .container {
+    max-width: 900px;
+    margin: auto;
+    padding: 15px 20px 40px 20px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    margin-top: 30px;
+  }
+  .service-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  .service-row input[type=text] {
+    flex: 2 1 40%;
+  }
+  .service-row input[type=number] {
+    flex: 1 1 25%;
+  }
+  .service-row button.remove-btn {
+    flex: 0 0 auto;
+    background: #ff4d4f;
+    color: white;
+    padding: 6px 12px;
+  }
+  .service-row button.remove-btn:hover {
+    background: #d9363e;
+  }
+  #addServiceBtn {
+    margin-top: 10px;
+    margin-bottom: 25px;
+  }
+  .flex-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .flex-row > div {
+    flex: 1 1 45%;
+  }
+
+  /* Login screen */
+  #loginScreen {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 25px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  #loginScreen input[type=password] {
+    font-size: 1.2rem;
+    padding: 12px 15px;
+  }
+  #loginScreen button {
+    margin-top: 15px;
+    width: 100%;
+    font-size: 1.1rem;
+  }
+  #loginError {
+    color: red;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .service-row {
+      flex-direction: column;
+    }
+    .service-row input[type=text], .service-row input[type=number], .service-row button.remove-btn {
+      flex: 1 1 100%;
+      margin-bottom: 8px;
+    }
+    .flex-row > div {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <h1>Ey Buddy Admin Login</h1>
+  <input type="password" id="adminPassword" placeholder="Enter admin password" autocomplete="off" />
+  <button id="loginBtn">Login</button>
+  <div id="loginError"></div>
+</div>
+
+<div id="adminPanel" class="container" style="display:none;">
+  <h2>Services Management</h2>
+  <div id="servicesList"></div>
+  <button id="addServiceBtn">+ Add Service</button>
+
+  <h2>Pricing Settings</h2>
+  <div class="flex-row">
+    <div>
+      <label for="pricePerHour">Price Per Hour (£)</label>
+      <input type="number" id="pricePerHour" min="0" step="0.01" />
+    </div>
+    <div>
+      <label for="callOutFee">Call-out Fee (£)</label>
+      <input type="number" id="callOutFee" min="0" step="0.01" />
+    </div>
+  </div>
+
+  <button id="saveBtn" style="margin-top:30px; width:100%;">Save Changes</button>
+  <button id="logoutBtn" style="margin-top:10px; width:100%; background:#ff4d4f; color:white;">Logout</button>
+</div>
+
+<script>
+  // Simple password hashing helper (for demonstration only)
+  function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash.toString();
+  }
+
+  // The hashed password (example: password is "eybuddy123")
+  const adminPasswordHash = simpleHash("eybuddy123");
+
+  const loginScreen = document.getElementById('loginScreen');
+  const adminPanel = document.getElementById('adminPanel');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+  const adminPasswordInput = document.getElementById('adminPassword');
+
+  const servicesList = document.getElementById('servicesList');
+  const addServiceBtn = document.getElementById('addServiceBtn');
+  const pricePerHourInput = document.getElementById('pricePerHour');
+  const callOutFeeInput = document.getElementById('callOutFee');
+  const saveBtn = document.getElementById('saveBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Load settings from localStorage or set defaults
+  let services = JSON.parse(localStorage.getItem('eybuddyServices')) || [
+    { name: "Full Service", price: 120, oldPrice: 180 },
+    { name: "MOT Pre-check", price: 40, oldPrice: 60 },
+    { name: "Brake Pads Replacement", price: 70, oldPrice: 100 },
+    { name: "Battery Check", price: 50, oldPrice: 80 }
+  ];
+  let pricePerHour = parseFloat(localStorage.getItem('eybuddyPricePerHour')) || 35;
+  let callOutFee = parseFloat(localStorage.getItem('eybuddyCallOutFee')) || 40;
+
+  // Render services list inputs
+  function renderServices() {
+    servicesList.innerHTML = "";
+    services.forEach((service, i) => {
+      const row = document.createElement('div');
+      row.className = "service-row";
+
+      row.innerHTML = `
+        <input type="text" value="${service.name}" placeholder="Service name" data-index="${i}" class="service-name" />
+        <input type="number" value="${service.price}" min="0" step="0.01" data-index="${i}" class="service-price" />
+        <input type="number" value="${service.oldPrice}" min="0" step="0.01" data-index="${i}" class="service-oldprice" />
+        <button class="remove-btn" data-index="${i}">Remove</button>
+      `;
+
+      servicesList.appendChild(row);
+    });
+
+    // Add event listeners for inputs
+    document.querySelectorAll('.service-name').forEach(input => {
+      input.addEventListener('input', e => {
+        const idx = e.target.dataset.index;
+        services[idx].name = e.target.value;
+      });
+    });
+    document.querySelectorAll('.service-price').forEach(input => {
+      input.addEventListener('input', e => {
+        const idx = e.target.dataset.index;
+        services[idx].price = parseFloat(e.target.value) || 0;
+      });
+    });
+    document.querySelectorAll('.service-oldprice').forEach(input => {
+      input.addEventListener('input', e => {
+        const idx = e.target.dataset.index;
+        services[idx].oldPrice = parseFloat(e.target.value) || 0;
+      });
+    });
+    document.querySelectorAll('.remove-btn').forEach(button => {
+      button.addEventListener('click', e => {
+        const idx = e.target.dataset.index;
+        services.splice(idx,1);
+        renderServices();
+      });
+    });
+  }
+
+  // Add new blank service
+  addServiceBtn.addEventListener('click', () => {
+    services.push({ name: "", price: 0, oldPrice: 0 });
+    renderServices();
+  });
+
+  // Save settings to localStorage
+  saveBtn.addEventListener('click', () => {
+    localStorage.setItem('eybuddyServices', JSON.stringify(services));
+    localStorage.setItem('eybuddyPricePerHour', pricePerHourInput.value);
+    localStorage.setItem('eybuddyCallOutFee', callOutFeeInput.value);
+    alert("Settings saved!");
+  });
+
+  // Load initial values
+  function loadSettings() {
+    pricePerHourInput.value = pricePerHour;
+    callOutFeeInput.value = callOutFee;
+    renderServices();
+  }
+
+  // Logout function
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('eybuddyAdminLoggedIn');
+    location.reload();
+  });
+
+  // Login logic
+  loginBtn.addEventListener('click', () => {
+    const entered = adminPasswordInput.value;
+    if (simpleHash(entered) === adminPasswordHash) {
+      localStorage.setItem('eybuddyAdminLoggedIn', 'true');
+      loginScreen.style.display = 'none';
+      adminPanel.style.display = 'block';
+      loadSettings();
+    } else {
+      loginError.textContent = "Incorrect password, try again.";
+    }
+  });
+
+  // Check if already logged in
+  window.addEventListener('load', () => {
+    if(localStorage.getItem('eybuddyAdminLoggedIn') === 'true') {
+      loginScreen.style.display = 'none';
+      adminPanel.style.display = 'block';
+      loadSettings();
+    }
+  });
+</script>
+</body>
+</html>
