@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Ey Buddy Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f8; }
+  h1 { color: #204E8B; text-align: center; margin-bottom: 30px; }
+  label { font-weight: bold; display: block; margin-top: 15px; }
+  input[type="text"], input[type="number"], input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+  }
+  th {
+    background-color: #204E8B;
+    color: white;
+  }
+  button {
+    background-color: #204E8B;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  button:hover {
+    background-color: #163a63;
+  }
+  .checkbox-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .save-msg {
+    color: green;
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
+    display: none;
+  }
+  #loginArea {
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.2);
+  }
+  #adminContent {
+    display: none;
+  }
+  .remove-btn {
+    background: #e63946;
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="loginArea">
+  <h2>Admin Login</h2>
+  <label for="adminPassInput">Enter Admin Password:</label>
+  <input type="password" id="adminPassInput" autocomplete="off" />
+  <button id="loginBtn">Login</button>
+  <p id="loginMsg" style="color:red; display:none; margin-top:10px;"></p>
+</div>
+
+<div id="adminContent">
+  <h1>Ey Buddy Admin Control Panel</h1>
+
+  <form id="adminForm">
+    <label for="hourlyRate">Hourly Rate (£):</label>
+    <input type="number" id="hourlyRate" min="0" step="0.01" required>
+
+    <label for="calloutFee">Call-out Fee (£):</label>
+    <input type="number" id="calloutFee" min="0" step="0.01" required>
+
+    <h2>Services</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Active</th>
+          <th>Name</th>
+          <th>Price (£)</th>
+          <th>Old Price (£)</th>
+          <th>Max Quantity</th>
+          <th>Remove</th>
+        </tr>
+      </thead>
+      <tbody id="servicesTableBody"></tbody>
+    </table>
+    <button type="button" id="addServiceBtn">+ Add Service</button>
+
+    <button type="submit">Save Settings</button>
+    <div class="save-msg" id="saveMessage">Settings saved successfully!</div>
+  </form>
+</div>
+
+<script>
+(async () => {
+  const loginArea = document.getElementById('loginArea');
+  const adminContent = document.getElementById('adminContent');
+  const loginBtn = document.getElementById('loginBtn');
+  const adminPassInput = document.getElementById('adminPassInput');
+  const loginMsg = document.getElementById('loginMsg');
+
+  // SHA-256 hash function (returns hex string)
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Check if password hash exists
+  let storedHash = localStorage.getItem('adminPassHash');
+
+  // If no password stored, ask to create one
+  async function promptCreatePassword() {
+    loginMsg.style.color = 'black';
+    loginMsg.style.display = 'block';
+    loginMsg.textContent = "No admin password set. Please create a new password and press Login.";
+  }
+
+  // Verify password input
+  async function verifyPassword(input) {
+    const inputHash = await sha256(input);
+    return inputHash === storedHash;
+  }
+
+  // On login button click
+  loginBtn.addEventListener('click', async () => {
+    const pass = adminPassInput.value.trim();
+    if (!pass) {
+      loginMsg.style.color = 'red';
+      loginMsg.style.display = 'block';
+      loginMsg.textContent = "Please enter a password.";
+      return;
+    }
+
+    if (!storedHash) {
+      // No password stored, create one now
+      storedHash = await sha256(pass);
+      localStorage.setItem('adminPassHash', storedHash);
+      loginMsg.style.color = 'green';
+      loginMsg.textContent = "Password created. You are now logged in.";
+      showAdminPanel();
+      return;
+    }
+
+    const ok = await verifyPassword(pass);
+    if (ok) {
+      loginMsg.style.display = 'none';
+      showAdminPanel();
+    } else {
+      loginMsg.style.color = 'red';
+      loginMsg.style.display = 'block';
+      loginMsg.textContent = "Incorrect password. Try again.";
+    }
+  });
+
+  function showAdminPanel() {
+    loginArea.style.display = 'none';
+    adminContent.style.display = 'block';
+    loadData();
+  }
+
+  // Default data structure
+  let data = {
+    settings: { hourlyRate: 35, calloutFee: 20 },
+    services: {
+      mot: { name: "MOT Pre-check", price: 40, oldPrice: 70, maxQty: 2, active: true },
+      service: { name: "Full Service", price: 120, oldPrice: 200, maxQty: 2, active: true },
+      brakes: { name: "Brake Pads Replacement", price: 90, oldPrice: 150, maxQty: 1, active: true }
+    }
+  };
+
+  // Load from localStorage or default
+  function loadData() {
+    const saved = localStorage.getItem('servicesData');
+    if (saved) {
+      try {
+        data = JSON.parse(saved);
+      } catch (e) {}
+    }
+    hourlyRateInput.value = data.settings.hourlyRate;
+    calloutFeeInput.value = data.settings.calloutFee;
+    renderServicesTable();
+  }
+
+  // Elements references
+  const hourlyRateInput = document.getElementById('hourlyRate');
+  const calloutFeeInput = document.getElementById('calloutFee');
+  const servicesTableBody = document.getElementById('servicesTableBody');
+  const saveMessage = document.getElementById('saveMessage');
+  const addServiceBtn = document.getElementById('addServiceBtn');
+
+  // Generate unique id for new services
+  function genId() {
+    return 'svc_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  // Render services table
+  function renderServicesTable() {
+    servicesTableBody.innerHTML = '';
+    for (const key in data.services) {
+      const svc = data.services[key];
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td class="checkbox-center">
+          <input type="checkbox" data-key="${key}" class="active-checkbox" ${svc.active ? 'checked' : ''} />
+        </td>
+        <td>
+          <input type="text" data-key="${key}" class="name-input" value="${svc.name}" required />
+        </td>
+        <td>
+          <input type="number" min="0" step="0.01" data-key="${key}" class="price-input" value="${svc.price}" required />
+        </td>
+        <td>
+          <input type="number" min="0" step="0.01" data-key="${key}" class="oldprice-input" value="${svc.oldPrice}" required />
+        </td>
+        <td>
+          <input type="number" min="1" step="1" data-key="${key}" class="maxqty-input" value="${svc.maxQty}" required />
+        </td>
+        <td>
+          <button type="button" data-key="${key}" class="remove-btn">Remove</button>
+        </td>
+      `;
+      servicesTableBody.appendChild(tr);
+    }
+    // Add event listeners to remove buttons
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const key = e.target.dataset.key;
+        if (confirm(`Remove service "${data.services[key].name}"?`)) {
+          delete data.services[key];
+          renderServicesTable();
+        }
+      });
+    });
+  }
+
+  // Add new empty service
+  addServiceBtn.addEventListener('click', () => {
+    const newId = genId();
+    data.services[newId] = {
+      name: "New Service",
+      price: 0,
+      oldPrice: 0,
+      maxQty: 1,
+      active: true
+    };
+    renderServicesTable();
+  });
+
+  // Save form
+  document.getElementById('adminForm').addEventListener('submit', e => {
+    e.preventDefault();
+
+    data.settings.hourlyRate = parseFloat(hourlyRateInput.value) || 0;
+    data.settings.calloutFee = parseFloat(calloutFeeInput.value) || 0;
+
+    // Update services
+    const nameInputs = document.querySelectorAll('.name-input');
+    const priceInputs = document.querySelectorAll('.price-input');
+    const oldPriceInputs = document.querySelectorAll('.oldprice-input');
+    const maxQtyInputs = document.querySelectorAll('.maxqty-input');
+    const activeCheckboxes = document.querySelectorAll('.active-checkbox');
+
+    nameInputs.forEach(input => {
+      const key = input.dataset.key;
+      data.services[key].name = input.value.trim() || data.services[key].name;
+    });
+    priceInputs.forEach(input => {
+      const key = input.dataset.key;
+      data.services[key].price = parseFloat(input.value) || data.services[key].price;
+    });
+    oldPriceInputs.forEach(input => {
+      const key = input.dataset.key;
+      data.services[key].oldPrice = parseFloat(input.value) || data.services[key].oldPrice;
+    });
+    maxQtyInputs.forEach(input => {
+      const key = input.dataset.key;
+      let val = parseInt(input.value);
+      if (isNaN(val) || val < 1) val = 1;
+      data.services[key].maxQty = val;
+    });
+    activeCheckboxes.forEach(cb => {
+      const key = cb.dataset.key;
+      data.services[key].active = cb.checked;
+    });
+
+    localStorage.setItem('servicesData', JSON.stringify(data));
+    saveMessage.style.display = 'block';
+    setTimeout(() => { saveMessage.style.display = 'none'; }, 2500);
+  });
+
+  // On load
+  if (!storedHash) {
+    await promptCreatePassword();
+  }
+
+})();
+</script>
+
+</body>
+</html>
