@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ey Buddy Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f9f9f9; }
+    h1 { color:#204E8B; text-align:center; margin-bottom:20px; }
+    label { font-weight:bold; display:block; margin-top: 15px; }
+    input[type=number] { width: 80px; padding: 5px; margin-top:5px; }
+    .service-item { display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #ddd; padding:12px; margin:8px 0; border-radius:6px; }
+    .add-service-btn { background:#4CAF50; color:white; border:none; padding:6px 14px; cursor:pointer; border-radius:4px; font-size:16px; }
+    .add-service-btn:disabled { background:#aaa; cursor:not-allowed; }
+    #cartButton { position:fixed; bottom:20px; right:20px; background:#204E8B; color:white; padding:15px 20px; border-radius:50px; cursor:pointer; display:none; align-items:center; }
+    #cartButton span { margin-left:8px; }
+    #cartPanel { position:fixed; bottom:80px; right:20px; width:320px; background:white; border:1px solid #ddd; border-radius:8px; padding:15px; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.2); }
+    #cartPanel h3 { margin-top:0; }
+    #cartItems li { display:flex; justify-content:space-between; margin-bottom:5px; }
+    #totalPrice { font-weight:bold; margin-top:10px; }
+    #totalSavings { color:green; margin-top:5px; }
+    #settingsInfo { margin-top:10px; font-size:14px; color:#444; }
+    #plateBox { font-family:'UKNumberPlate', Arial, sans-serif; font-size:20px; background:#ffea00; border:2px solid #000; padding:5px 10px; display:inline-block; border-radius:4px; margin:10px 0; }
+    @font-face { font-family: 'UKNumberPlate'; src: local('Arial Black'); }
+  </style>
+</head>
+<body>
+
+<h1>Book Your Service</h1>
+
+<!-- Number Plate First -->
+<label for="numberPlate">Enter Your Number Plate:</label>
+<input type="text" id="numberPlate" maxlength="10" placeholder="AB12 CDE">
+<button onclick="setPlate()">Set</button>
+
+<div id="plateBox" style="display:none;"></div>
+
+<div id="servicesList"></div>
+
+<!-- Labour Hours Input -->
+<label for="labourHours">Labour Hours:</label>
+<input type="number" id="labourHours" min="0" max="24" step="0.5" value="0" onchange="onLabourHoursChange()">
+
+<!-- Floating cart button -->
+<div id="cartButton" onclick="toggleCart()">🛒 <span id="cartCount">0</span></div>
+
+<!-- Cart panel -->
+<div id="cartPanel">
+  <h3>Your Cart</h3>
+  <div id="plateBoxCart"></div>
+  <ul id="cartItems"></ul>
+  <div id="labourCostRow" style="margin-top:5px;"></div>
+  <div id="calloutFeeRow" style="margin-top:5px;"></div>
+  <div id="totalPrice"></div>
+  <div id="totalSavings"></div>
+  <div id="settingsInfo"></div>
+</div>
+
+<script>
+let appData = JSON.parse(localStorage.getItem("servicesData")) || {
+  settings: { hourlyRate: 35, calloutFee: 20 },
+  services: {
+    mot: { name: "MOT Pre-check", price: 40, oldPrice: 70, maxQty: 2, active: true },
+    service: { name: "Full Service", price: 120, oldPrice: 200, maxQty: 2, active: true },
+    brakes: { name: "Brake Pads Replacement", price: 90, oldPrice: 150, maxQty: 1, active: true }
+  }
+};
+
+let serviceData = appData.services;
+let settings = appData.settings;
+let selectedServices = {};
+let labourHours = 0;
+
+function setPlate() {
+  const val = document.getElementById("numberPlate").value.toUpperCase();
+  if(val.trim() === "") return alert("Please enter a number plate");
+  document.getElementById("plateBox").textContent = val;
+  document.getElementById("plateBox").style.display = "inline-block";
+  document.getElementById("plateBoxCart").textContent = "Plate: " + val;
+}
+
+function renderServicesList() {
+  const list = document.getElementById("servicesList");
+  list.innerHTML = "";
+  for (let key in serviceData) {
+    const s = serviceData[key];
+    if (!s.active) continue;
+    const item = document.createElement("div");
+    item.className = "service-item";
+    item.innerHTML = `
+      <div>${s.name} – £${s.price}</div>
+      <button class="add-service-btn" id="btn-${key}">+</button>
+    `;
+    item.querySelector("button").addEventListener("click", () => addService(key));
+    list.appendChild(item);
+  }
+}
+
+function addService(serviceKey) {
+  if (!selectedServices[serviceKey]) selectedServices[serviceKey] = 0;
+  const s = serviceData[serviceKey];
+  if (selectedServices[serviceKey] < s.maxQty) {
+    selectedServices[serviceKey]++;
+    updateCart();
+  } else {
+    alert(`Maximum of ${s.maxQty} bookings allowed for ${s.name}`);
+  }
+}
+
+function onLabourHoursChange() {
+  let val = parseFloat(document.getElementById("labourHours").value);
+  if (isNaN(val) || val < 0) val = 0;
+  if (val > 24) val = 24;
+  labourHours = val;
+  document.getElementById("labourHours").value = val;
+  updateCart();
+}
+
+function updateCart() {
+  const cartItems = document.getElementById("cartItems");
+  cartItems.innerHTML = '';
+  let total = 0, oldTotal = 0, count = 0;
+
+  for (const key in selectedServices) {
+    const qty = selectedServices[key];
+    if (qty === 0) continue;
+    const s = serviceData[key];
+    total += s.price * qty;
+    oldTotal += s.oldPrice * qty;
+    count += qty;
+
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div>${s.name} x${qty}</div>
+      <div>£${s.price * qty}</div>
+    `;
+    cartItems.appendChild(li);
+  }
+
+  // Labour cost calculation
+  let labourCost = labourHours * settings.hourlyRate;
+  if (labourCost > 0) {
+    total += labourCost;
+    oldTotal += labourCost;
+    document.getElementById("labourCostRow").innerHTML = 
+      `<div>Labour Cost (${labourHours} hrs @ £${settings.hourlyRate}/hr): £${labourCost.toFixed(2)}</div>`;
+  } else {
+    document.getElementById("labourCostRow").innerHTML = "";
+  }
+
+  // Add call-out fee if at least 1 service is selected
+  if (count > 0) {
+    total += settings.calloutFee;
+    oldTotal += settings.calloutFee;
+    document.getElementById("calloutFeeRow").innerHTML =
+      `<div>Call‑out Fee: £${settings.calloutFee}</div>`;
+  } else {
+    document.getElementById("calloutFeeRow").innerHTML = "";
+  }
+
+  document.getElementById("cartCount").textContent = count;
+  document.getElementById("totalPrice").textContent = "Total: £" + total.toFixed(2);
+  const saving = oldTotal - total;
+  document.getElementById("totalSavings").textContent = saving > 0 ? "You Save: £" + saving.toFixed(2) : "";
+
+  document.getElementById("settingsInfo").innerHTML =
+    `Hourly Rate: £${settings.hourlyRate}/hr<br>Call‑out Fee: £${settings.calloutFee}`;
+
+  document.getElementById("cartButton").style.display = count > 0 ? "flex" : "none";
+}
+
+function toggleCart() {
+  const panel = document.getElementById("cartPanel");
+  panel.style.display = (panel.style.display === "block") ? "none" : "block";
+}
+
+renderServicesList();
+</script>
+</body>
+</html>
