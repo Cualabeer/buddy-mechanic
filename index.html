@@ -1,299 +1,527 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ey Buddy Booking</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Mobile Mechanic Booking</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f7f8fa;
+    color: #001f3f;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
 
-    :root {
-      --lime-green: #A4DE02;
-      --deep-blue: #204E8B;
-      --dark-bg: #111214;
-      --light-bg: #f7f9fa;
-    }
+  /* Dashboard lights top bar */
+  #dashboard {
+    height: 12.5vh;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    user-select: none;
+  }
+  .light {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+  .oil { background: red; }
+  .engine { background: orange; }
+  .fuel { background: yellow; }
+  .abs { background: #ff6600; }
 
-    * { box-sizing: border-box; }
+  /* Main area with start button */
+  #main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f7f8fa;
+    flex-direction: column;
+  }
+  #startBtn {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: none;
+    background: limegreen;
+    box-shadow: 0 0 20px limegreen;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+    color: #003300;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 10px limegreen; }
+    50% { box-shadow: 0 0 30px limegreen; }
+  }
 
-    body, html {
-      margin: 0; padding: 0;
-      min-height: 100%;
-      font-family: 'Orbitron', monospace, Arial, sans-serif;
-      background: var(--light-bg);
-    }
+  /* Terms popup */
+  #termsPopup {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  #termsContent {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 500px;
+    text-align: center;
+    font-size: 1.1rem;
+  }
+  #termsContent button {
+    margin-top: 20px;
+    background: #1abc9c;
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: background 0.3s ease;
+  }
+  #termsContent button:hover {
+    background: #159e85;
+  }
 
-    /* Dashboard (top 25%) */
-    #dashboard {
-      height: 25vh;
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      background: var(--dark-bg);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.3);
-    }
+  /* Booking Container holds form and cart */
+  #bookingContainer {
+    display: flex;
+    gap: 20px;
+    max-width: 960px;
+    margin: 20px auto 60px auto;
+    padding: 0 10px;
+    height: calc(100vh - 12.5vh - 40px); /* full remaining height minus dashboard and margin */
+  }
 
-    #lights {
-      display: flex;
-      justify-content: space-around;
-      width: 100%;
-      margin-bottom: 30px;
-      filter: drop-shadow(0 0 4px var(--lime-green));
-    }
-    .light {
-      width: 55px; height: 55px;
-      border-radius: 50%;
-      background: #222;
-      animation: blink 4s infinite;
-      position: relative;
-    }
-    .light:nth-child(2){animation-delay:1s;}
-    .light:nth-child(3){animation-delay:2s;}
-    .light:nth-child(4){animation-delay:3s;}
-    .light svg {
-      fill: var(--lime-green);
-      width: 30px; height: 30px;
-      position: absolute;
-      top:50%; left:50%;
-      transform:translate(-50%,-50%);
-    }
-    @keyframes blink {
-      0%,50%,100%{opacity:1;}
-      25%,75%{opacity:0.4;}
-    }
+  /* Booking Form */
+  #bookingForm {
+    flex: 1 1 60%;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    display: none;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 100%;
+    margin: 0;
+  }
+  #bookingForm h2 {
+    margin-top: 0;
+    color: #003366;
+  }
+  #bookingForm label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 700;
+    color: #003366;
+  }
+  #bookingForm select,
+  #bookingForm input:not(#numberPlate) {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
 
-    #startButtonWrapper {
-      position: relative;
-      width: 120px; height: 120px;
-      cursor: pointer;
-    }
-    #startButtonWrapper::before {
-      content:"";
-      position:absolute;
-      top:-12px; left:-12px;
-      width:144px; height:144px;
-      border-radius:50%;
-      border:4px solid var(--lime-green);
-      animation:pulse 2s infinite;
-    }
-    #startButton {
-      width:100%; height:100%;
-      border-radius:50%;
-      display:flex; justify-content:center; align-items:center;
-      background: radial-gradient(circle, var(--deep-blue) 50%, var(--lime-green) 95%);
-      color:#fff;
-      font-weight:bold;
-      font-size:1.3rem;
-      letter-spacing:2px;
-      user-select: none;
-    }
-    @keyframes pulse {
-      0%,100%{box-shadow:0 0 15px var(--lime-green);}
-      50%{box-shadow:0 0 35px var(--lime-green);}
-    }
+  /* Number Plate Styling */
+  .plate {
+    display: flex;
+    align-items: center;
+    background: #ffcc00;
+    border: 2px solid black;
+    border-radius: 4px;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: black;
+    padding: 6px 12px;
+    justify-content: flex-start;
+    user-select: none;
+  }
+  .plate .gb {
+    background: #003399;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    margin-right: 10px;
+    border-radius: 2px 0 0 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  .plate .gb span {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
 
-    /* Modal */
-    #modalOverlay {
-      display:none;
-      position:fixed; inset:0;
-      background:rgba(0,0,0,0.6);
-      display:flex; justify-content:center; align-items:center;
-      z-index:100;
-    }
-    #modal {
-      background:#fff; color:#333;
-      padding:20px 25px;
-      border-radius:10px;
-      max-width:400px;
-      text-align:left;
-      font-family:sans-serif;
-    }
-    #modal h2 {margin-top:0; color:var(--deep-blue);}
-    #modalButtons {margin-top:20px; text-align:right;}
-    #modalButtons button {
-      margin-left:10px;
-      padding:8px 16px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
-      transition: background-color 0.3s;
-    }
-    #agreeBtn {background:var(--lime-green); color:#000;}
-    #agreeBtn:hover {background:#8fc802;}
-    #declineBtn {background:#ddd;}
-    #declineBtn:hover {background:#bbb;}
+  #numberPlate {
+    border: none;
+    background: transparent;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: black;
+    outline: none;
+    width: 120px;
+    text-transform: uppercase;
+    caret-color: black;
+    user-select: text;
+  }
 
-    /* Booking Form */
+  /* Floating Cart */
+  #cart {
+    flex: 0 0 320px;
+    background: white;
+    border: 3px solid #1abc9c;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.25);
+    display: none;
+    padding: 15px 20px 20px 20px;
+    font-size: 0.95rem;
+    color: #003366;
+    max-height: 100%;
+    overflow-y: auto;
+    position: relative;
+  }
+  #cart h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: #1abc9c;
+    font-weight: 700;
+    user-select: none;
+  }
+  .cart-item {
+    margin-bottom: 8px;
+  }
+  .cart-total {
+    font-weight: 700;
+    margin-top: 15px;
+    font-size: 1.15rem;
+  }
+  .cart-savings {
+    color: green;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  #cartCloseBtn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #1abc9c;
+    user-select: none;
+  }
+  #cartCloseBtn:hover {
+    color: #159e85;
+  }
+
+  /* Floating Cart Toggle Button */
+  #cartToggleBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #1abc9c;
+    color: white;
+    font-size: 2rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 15px #1abc9c;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+  }
+  #cartToggleBtn:hover {
+    background: #159e85;
+  }
+
+  /* Booking container responsiveness */
+  @media (max-width: 900px) {
     #bookingContainer {
-      display:none;
-      max-width:480px;
-      margin:40px auto;
-      background:#fff;
-      padding:25px;
-      border-radius:12px;
-      box-shadow:0 6px 20px rgba(0,0,0,0.1);
-      font-family:sans-serif;
+      flex-direction: column;
+      height: auto;
     }
-    #bookingContainer h1 {
-      margin:0; text-align:center;
-      color:var(--deep-blue);
+    #bookingForm, #cart {
+      flex: none;
+      max-width: 100%;
+      width: 100%;
+      margin-bottom: 20px;
+      max-height: 400px;
     }
-    #bookingContainer h2 {
-      text-align:center; color:var(--lime-green);
-      margin:10px 0 25px;
+    #cartToggleBtn {
+      bottom: 10px;
+      right: 10px;
+      width: 50px;
+      height: 50px;
+      font-size: 1.6rem;
     }
-    form label {display:block; margin-top:15px; font-weight:600;}
-    input, select, textarea {
-      width:100%; padding:10px;
-      border:1px solid #ccc;
-      border-radius:8px;
-      margin-top:5px;
-      font-size: 1rem;
-      font-family: inherit;
-    }
-    form button[type="submit"] {
-      margin-top:20px; width:100%;
-      padding:12px;
-      background:var(--lime-green);
-      border:none; border-radius:8px;
-      font-weight:bold; font-size:1.1rem;
-      cursor:pointer;
-      transition: background-color 0.3s;
-    }
-    form button[type="submit"]:hover {
-      background: #8fc802;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
-<div id="dashboard">
-  <div id="lights" aria-label="Car dashboard warning lights" role="img">
-    <div class="light" title="Oil Light">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18h12v-2H6v2zm6-16c-2.21 0-4 1.79-4 4v7c0 1.1.9 2 2 2s2-.9 2-2V6c0-2.21-1.79-4-4-4z"/></svg>
-    </div>
-    <div class="light" title="Engine Management Light">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6V4H8v2H2v14h20V6h-6zM4 18v-8h16v8H4z"/></svg>
-    </div>
-    <div class="light" title="Fuel Light">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h8v-6H6v6zm12-11h-3v6h1v5h2v-5h1V8z"/></svg>
-    </div>
-    <div class="light" title="ABS Light">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-2v2h-2v-2h-2v2H9v-2H7v-2h2v-2h2v2h2v-2h2v2h2v2z"/></svg>
-    </div>
-  </div>
-  <div id="startButtonWrapper" role="button" aria-label="Start booking" tabindex="0">
-    <div id="startButton">START</div>
+<!-- Dashboard Lights -->
+<div id="dashboard" aria-label="Dashboard warning lights">
+  <div class="light oil" aria-label="Oil warning light"></div>
+  <div class="light engine" aria-label="Engine management light"></div>
+  <div class="light fuel" aria-label="Fuel warning light"></div>
+  <div class="light abs" aria-label="ABS warning light"></div>
+</div>
+
+<!-- Main area with start button -->
+<div id="main" aria-label="Start booking area">
+  <button id="startBtn" aria-label="Start booking button">START</button>
+</div>
+
+<!-- Terms popup -->
+<div id="termsPopup" role="dialog" aria-modal="true" aria-labelledby="termsTitle" aria-describedby="termsDesc">
+  <div id="termsContent">
+    <h2 id="termsTitle">Terms & Conditions</h2>
+    <p id="termsDesc">Please agree to the terms and conditions before booking your service.</p>
+    <button id="agreeBtn" aria-label="Agree to terms and proceed">I Agree</button>
   </div>
 </div>
 
-<!-- Modal -->
-<div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
-  <div id="modal">
-    <h2 id="modalTitle">Terms & Conditions</h2>
-    <p id="modalDesc">
-      1. Service appointments are subject to availability.<br>
-      2. Cancellation requires 24h notice.<br>
-      3. Ey Buddy is not liable for pre-existing vehicle issues.
-    </p>
-    <div id="modalButtons">
-      <button id="declineBtn">Decline</button>
-      <button id="agreeBtn">Agree</button>
-    </div>
-  </div>
-</div>
-
-<!-- Booking Form -->
+<!-- Booking container -->
 <div id="bookingContainer">
-  <h1>Ey Buddy</h1>
-  <h2>Mobile Mechanic Booking</h2>
-  <form id="bookingForm" novalidate>
-    <label for="name">Full Name *</label>
-    <input type="text" id="name" name="name" required autocomplete="name" />
 
-    <label for="phone">Phone Number *</label>
-    <input type="tel" id="phone" name="phone" required autocomplete="tel" />
+  <!-- Booking form -->
+  <form id="bookingForm" role="form" aria-label="Booking form">
+    <!-- Number plate input styled as plate -->
+    <div class="plate" aria-label="Vehicle number plate input">
+      <div class="gb" aria-hidden="true"><span>🇬🇧</span>GB</div>
+      <input
+        id="numberPlate"
+        name="numberPlate"
+        type="text"
+        maxlength="8"
+        placeholder="AB12 CDE"
+        autocomplete="off"
+        spellcheck="false"
+        aria-required="true"
+        aria-describedby="plateHelp"
+        required
+      />
+    </div>
+    <small id="plateHelp" style="color:#666;">Enter your vehicle registration number here</small>
 
-    <label for="vehicle">Vehicle *</label>
-    <input type="text" id="vehicle" name="vehicle" required />
+    <h2>Book a Service</h2>
 
-    <label for="service">Service *</label>
-    <select id="service" name="service" required>
-      <option value="">Select</option>
-      <option>Oil Change</option>
-      <option>Brake Repair</option>
-      <option>Engine Diagnosis</option>
-      <option>Battery Replacement</option>
+    <label for="carMake">Car Make</label>
+    <input id="carMake" name="carMake" type="text" placeholder="e.g. BMW" autocomplete="off" required />
+
+    <label for="carModel">Car Model</label>
+    <input id="carModel" name="carModel" type="text" placeholder="e.g. 118i" autocomplete="off" required />
+
+    <label for="serviceSelect">Select Service</label>
+    <select id="serviceSelect" name="service" aria-label="Select Service" required>
+      <option value="">-- Select --</option>
+      <!-- options will be added dynamically -->
     </select>
 
-    <label for="date">Preferred Date *</label>
-    <input type="date" id="date" name="date" required />
+    <label for="customerName">Your Name</label>
+    <input id="customerName" name="customerName" type="text" placeholder="Full Name" autocomplete="off" required />
 
-    <label for="time">Preferred Time *</label>
-    <input type="time" id="time" name="time" required />
+    <label for="phoneNumber">Phone Number</label>
+    <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="07123 456789" autocomplete="off" required />
 
-    <label for="notes">Notes</label>
-    <textarea id="notes" name="notes" rows="3"></textarea>
+    <label for="dateSelect">Preferred Date</label>
+    <input id="dateSelect" name="dateSelect" type="date" required />
 
-    <button type="submit">Book Now</button>
+    <button type="submit" style="margin-top: 20px; background: #1abc9c; color: white; font-weight: 700; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">Book Now</button>
   </form>
+
+  <!-- Cart -->
+  <div id="cart" aria-label="Booking cart">
+    <button id="cartCloseBtn" aria-label="Close cart">&times;</button>
+    <h3>Your Booking</h3>
+    <div id="cartPlate" class="plate" aria-live="polite" aria-atomic="true">
+      <div class="gb" aria-hidden="true"><span>🇬🇧</span>GB</div>
+      <span id="cartNumberPlate" style="margin-left:10px;">--</span>
+    </div>
+    <div id="cartItems"></div>
+    <div class="cart-total" id="cartTotal"></div>
+    <div class="cart-savings" id="cartSavings"></div>
+  </div>
+
 </div>
 
+<!-- Floating Cart Toggle Button -->
+<button id="cartToggleBtn" aria-label="Toggle booking cart">&#128722;</button>
+
 <script>
-  const startBtnWrapper = document.getElementById('startButtonWrapper');
-  const modal = document.getElementById('modalOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const termsPopup = document.getElementById('termsPopup');
   const agreeBtn = document.getElementById('agreeBtn');
-  const declineBtn = document.getElementById('declineBtn');
-  const dashboard = document.getElementById('dashboard');
-  const bookingContainer = document.getElementById('bookingContainer');
+  const main = document.getElementById('main');
   const bookingForm = document.getElementById('bookingForm');
-  const dateInput = document.getElementById('date');
+  const dashboard = document.getElementById('dashboard');
 
-  // Set min date to today
-  dateInput.min = new Date().toISOString().split('T')[0];
+  const serviceSelect = document.getElementById('serviceSelect');
+  const cart = document.getElementById('cart');
+  const cartToggleBtn = document.getElementById('cartToggleBtn');
+  const cartCloseBtn = document.getElementById('cartCloseBtn');
+  const cartItemsDiv = document.getElementById('cartItems');
+  const cartTotalDiv = document.getElementById('cartTotal');
+  const cartSavingsDiv = document.getElementById('cartSavings');
+  const numberPlateInput = document.getElementById('numberPlate');
+  const cartNumberPlate = document.getElementById('cartNumberPlate');
 
-  // Start button click shows terms modal
-  startBtnWrapper.addEventListener('click', () => {
-    modal.style.display = "flex";
+  // Sample services with price & usual price for savings
+  const services = [
+    {id:'service', name: 'Service', price: 70, usualPrice: 100},
+    {id:'mot', name: 'MOT Pre-Check', price: 45, usualPrice: 60},
+    {id:'oilchange', name: 'Oil Change', price: 50, usualPrice: 65},
+    {id:'brakes', name: 'Brake Inspection', price: 40, usualPrice: 55},
+    {id:'battery', name: 'Battery Test', price: 30, usualPrice: 45}
+  ];
+
+  // Populate service select options
+  function populateServices() {
+    services.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${s.name} - £${s.price} (Save £${s.usualPrice - s.price})`;
+      serviceSelect.appendChild(opt);
+    });
+  }
+
+  populateServices();
+
+  // Booking data model
+  let booking = {
+    numberPlate: '',
+    carMake: '',
+    carModel: '',
+    selectedServices: [],
+    customerName: '',
+    phoneNumber: '',
+    dateSelect: ''
+  };
+
+  // Update cart display
+  function updateCart() {
+    booking.numberPlate = numberPlateInput.value.trim().toUpperCase();
+    cartNumberPlate.textContent = booking.numberPlate || '--';
+
+    // Show/hide cart toggle button if services selected
+    if (booking.selectedServices.length > 0) {
+      cartToggleBtn.style.display = 'flex';
+    } else {
+      cartToggleBtn.style.display = 'none';
+      cart.style.display = 'none';
+    }
+
+    // Update cart items
+    cartItemsDiv.innerHTML = '';
+    let total = 0;
+    let savings = 0;
+    booking.selectedServices.forEach(id => {
+      const svc = services.find(s => s.id === id);
+      if (svc) {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.textContent = `${svc.name}: £${svc.price}`;
+        cartItemsDiv.appendChild(div);
+        total += svc.price;
+        savings += (svc.usualPrice - svc.price);
+      }
+    });
+
+    cartTotalDiv.textContent = `Total: £${total.toFixed(2)}`;
+    cartSavingsDiv.textContent = savings > 0 ? `You save £${savings.toFixed(2)}!` : '';
+  }
+
+  // Service select handler
+  serviceSelect.addEventListener('change', e => {
+    const val = e.target.value;
+    if (!booking.selectedServices.includes(val) && val) {
+      booking.selectedServices.push(val);
+    }
+    // Reset select back to placeholder
+    e.target.value = '';
+    updateCart();
   });
-  // Keyboard accessibility (Enter/Space)
-  startBtnWrapper.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      modal.style.display = "flex";
+
+  // Cart toggle handlers
+  cartToggleBtn.addEventListener('click', () => {
+    if (cart.style.display === 'block') {
+      cart.style.display = 'none';
+    } else {
+      cart.style.display = 'block';
     }
   });
+  cartCloseBtn.addEventListener('click', () => {
+    cart.style.display = 'none';
+  });
 
-  declineBtn.onclick = () => {
-    modal.style.display = "none";
-  };
+  // Start button handler
+  startBtn.addEventListener('click', () => {
+    // Flash lights animation
+    const lights = document.querySelectorAll('.light');
+    let flashes = 0;
+    const maxFlashes = 4;
+    const flashInterval = setInterval(() => {
+      lights.forEach(l => l.style.opacity = l.style.opacity === '1' ? '0.4' : '1');
+      flashes++;
+      if (flashes >= maxFlashes) {
+        clearInterval(flashInterval);
+        // Hide main & show terms popup
+        main.style.display = 'none';
+        termsPopup.style.display = 'flex';
+        // Turn lights off
+        lights.forEach(l => l.style.opacity = '0.4');
+      }
+    }, 400);
+  });
 
-  agreeBtn.onclick = () => {
-    modal.style.display = "none";
-    dashboard.style.display = "none";
-    bookingContainer.style.display = "block";
-  };
+  // Agree button handler
+  agreeBtn.addEventListener('click', () => {
+    termsPopup.style.display = 'none';
+    dashboard.style.display = 'flex';
+    bookingForm.style.display = 'flex';
+  });
 
-  bookingForm.onsubmit = (e) => {
+  // Update booking data on form input changes
+  bookingForm.addEventListener('input', e => {
+    const tgt = e.target;
+    booking[tgt.name] = tgt.value;
+    updateCart();
+  });
+
+  // Prevent form submit default & alert (placeholder)
+  bookingForm.addEventListener('submit', e => {
     e.preventDefault();
-
-    // Simple form validity check
-    if(!bookingForm.checkValidity()) {
-      bookingForm.reportValidity();
-      return;
-    }
-
-    alert("Thank you, your booking request has been submitted!");
-    bookingForm.reset();
-    bookingContainer.style.display = "none";
-    dashboard.style.display = "flex";
-  };
+    alert('Booking submitted!\n(Integrate your backend here)');
+  });
 </script>
-
 </body>
 </html>
