@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Mobile Mechanic Booking</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f7f8fa;
+    color: #001f3f;
+    overflow: hidden;
+  }
+  body, #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* Dashboard lights top bar */
+  #dashboard {
+    height: 12.5vh;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    user-select: none;
+  }
+  .light {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+  .oil { background: red; }
+  .engine { background: orange; }
+  .fuel { background: yellow; }
+  .abs { background: #ff6600; }
+
+  /* Main area with start button */
+  #main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f7f8fa;
+    flex-direction: column;
+  }
+  #startBtn {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: none;
+    background: limegreen;
+    box-shadow: 0 0 20px limegreen;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+    color: #003300;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 10px limegreen; }
+    50% { box-shadow: 0 0 30px limegreen; }
+  }
+
+  /* Number plate popup */
+  #platePopup {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+  }
+  #platePopupContent {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 10px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+  #platePopupContent h2 {
+    margin-top: 0;
+  }
+  #platePopupContent p {
+    margin-bottom: 10px;
+  }
+  #plateInputWrapper {
+    margin-top: 15px;
+    position: relative;
+    max-width: 320px;
+    height: 60px;
+    background: #ffcc00;
+    border: 3px solid black;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    user-select: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .gb-badge {
+    background: #003399;
+    color: white;
+    font-weight: bold;
+    padding: 0 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px 0 0 6px;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    user-select: none;
+  }
+  .gb-badge span:first-child {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  #plateInput {
+    border: none;
+    outline: none;
+    font-weight: 900;
+    font-size: 2.4rem;
+    padding: 0 15px;
+    flex-grow: 1;
+    background: transparent;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    user-select: text;
+    height: 100%;
+    color: #001f3f;
+  }
+  #plateError {
+    color: red;
+    margin-top: 10px;
+    font-weight: 600;
+    min-height: 1.2em;
+  }
+  #platePopupContent button {
+    margin-top: 20px;
+    background: #1abc9c;
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.2rem;
+    transition: background 0.3s ease;
+  }
+  #platePopupContent button:hover {
+    background: #159e85;
+  }
+
+  /* Booking Container holds form and cart */
+  #bookingContainer {
+    display: flex;
+    gap: 10px;
+    max-width: 100vw;
+    margin: 0 auto;
+    padding: 0 5px;
+    height: 100vh; /* Full viewport height */
+    box-sizing: border-box;
+  }
+
+  /* Booking form */
+  #bookingForm {
+    flex: 1 1 60%;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    display: none;
+    flex-direction: column;
+    padding: 15px 20px;
+    overflow-y: auto;
+    max-height: 100%;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  #bookingForm h2 {
+    margin-top: 0;
+    color: #003366;
+  }
+  #bookingForm label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 700;
+    color: #003366;
+  }
+  #bookingForm select,
+  #bookingForm input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+
+  /* Number plate display */
+  #plateDisplay {
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 4px;
+    background: #ffcc00;
+    border: 3px solid black;
+    border-radius: 6px;
+    padding: 8px 20px;
+    width: max-content;
+    margin-bottom: 15px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+  }
+  #plateDisplay .gb {
+    background: #003399;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 8px 12px;
+    margin-right: 15px;
+    border-radius: 4px 0 0 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #plateDisplay .gb span {
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  /* Floating Cart */
+  #cart {
+    flex: 0 0 320px;
+    background: white;
+    border: 3px solid #1abc9c;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.25);
+    display: none;
+    padding: 15px 20px 20px 20px;
+    font-size: 0.95rem;
+    color: #003366;
+    max-height: 100%;
+    overflow-y: auto;
+    position: relative;
+  }
+  #cart h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: #1abc9c;
+    font-weight: 700;
+    user-select: none;
+  }
+  .cart-item {
+    margin-bottom: 8px;
+  }
+  .cart-total {
+    font-weight: 700;
+    margin-top: 15px;
+    font-size: 1.15rem;
+  }
+  .cart-savings {
+    color: green;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  #cartCloseBtn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #1abc9c;
+    user-select: none;
+  }
+  #cartCloseBtn:hover {
+    color: #159e85;
+  }
+
+  /* Floating Cart Toggle Button */
+  #cartToggleBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #1abc9c;
+    color: white;
+    font-size: 2rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 15px #1abc9c;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    position: relative;
+  }
+  #cartToggleBtn:hover {
+    background: #159e85;
+  }
+  #cartBadge {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    background: red;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  /* Booking container responsiveness */
+  @media (max-width: 900px) {
+    #bookingContainer {
+      flex-direction: column;
+      height: auto;
+    }
+    #bookingForm, #cart {
+      flex: none;
+      max-width: 100%;
+      width: 100%;
+      margin-bottom: 20px;
+      max-height: 400px;
+    }
+    #cartToggleBtn {
+      bottom: 10px;
+      right: 10px;
+      width: 50px;
+      height: 50px;
+      font-size: 1.6rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Dashboard Lights -->
+<div id="dashboard" aria-label="Dashboard warning lights">
+  <div class="light oil" aria-label="Oil warning light"></div>
+  <div class="light engine" aria-label="Engine management light"></div>
+  <div class="light fuel" aria-label="Fuel warning light"></div>
+  <div class="light abs" aria-label="ABS warning light"></div>
+</div>
+
+<!-- Main area with start button -->
+<div id="main" aria-label="Start booking area">
+  <button id="startBtn" aria-label="Start booking button">START</button>
+</div>
+
+<!-- Number plate popup -->
+<div id="platePopup" role="dialog" aria-modal="true" aria-labelledby="plateTitle" aria-describedby="plateDesc">
+  <div id="platePopupContent">
+    <h2 id="plateTitle">Enter Your Vehicle Number Plate</h2>
+    <p id="plateDesc">Please enter your UK number plate to proceed with booking.</p>
+    <div id="plateInputWrapper">
+      <div class="gb-badge" aria-hidden="true">
+        <span>🇬🇧</span>
+        <span>GB</span>
+      </div>
+      <input id="plateInput" type="text" maxlength="8" placeholder="AB12 CDE" autocomplete="off" spellcheck="false" aria-describedby="plateError" />
+    </div>
+    <div id="plateError" role="alert" aria-live="assertive"></div>
+    <button id="plateSubmitBtn">Continue</button>
+  </div>
+</div>
+
+<!-- Booking and Cart container -->
+<div id="bookingContainer">
+  <form id="bookingForm" aria-label="Booking form">
+    <div id="plateDisplay" aria-live="polite">
+      <div class="gb" aria-hidden="true"><span>🇬🇧</span><span>GB</span></div>
+      <div id="plateConfirmed">--</div>
+    </div>
+    <h2>Booking Details</h2>
+    <label for="carMake">Car Make</label>
+    <input id="carMake" name="carMake" type="text" placeholder="e.g. BMW" autocomplete="off" required />
+
+    <label for="carModel">Car Model</label>
+    <input id="carModel" name="carModel" type="text" placeholder="e.g. 3 Series" autocomplete="off" required />
+
+    <label for="customerName">Your Name</label>
+    <input id="customerName" name="customerName" type="text" placeholder="e.g. John Smith" autocomplete="off" required />
+
+    <label for="phoneNumber">Phone Number</label>
+    <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="e.g. 07123 456789" autocomplete="off" required />
+
+    <label for="dateSelect">Preferred Date</label>
+    <input id="dateSelect" name="dateSelect" type="date" required min="" />
+
+    <label for="serviceSelect">Select a Service to Add</label>
+    <select id="serviceSelect" aria-label="Service selection">
+      <option value="">-- Select a service --</option>
+    </select>
+
+    <button type="submit" style="margin-top:20px; background:#1abc9c; color:#fff; font-weight:700; padding:12px; border:none; border-radius:8px; cursor:pointer; font-size:1.1rem;">Confirm Booking</button>
+  </form>
+
+  <aside id="cart" aria-label="Booking summary cart">
+    <button id="cartCloseBtn" aria-label="Close cart">&times;</button>
+    <h3>Your Booking Cart</h3>
+    <div id="cartNumberPlate" style="font-weight:bold; margin-bottom:10px; font-family: 'Arial Black', Gadget, sans-serif; font-size: 1.4rem; letter-spacing: 4px; background:#ffcc00; border:3px solid black; padding:6px 12px; width: max-content; user-select:none;">
+      --
+    </div>
+    <div id="cartItems"></div>
+    <div class="cart-total" id="cartTotal">Total: £0.00</div>
+    <div class="cart-savings" id="cartSavings"></div>
+  </aside>
+</div>
+
+<!-- Cart toggle button -->
+<button id="cartToggleBtn" aria-label="Toggle booking cart">
+  🛒
+  <span id="cartBadge"></span>
+</button>
+
+<script>
+  // Elements
+  const startBtn = document.getElementById('startBtn');
+  const dashboard = document.getElementById('dashboard');
+  const platePopup = document.getElementById('platePopup');
+  const plateInput = document.getElementById('plateInput');
+  const plateSubmitBtn = document.getElementById('plateSubmitBtn');
+  const plateError = document.getElementById('plateError');
+  const bookingForm = document.getElementById('bookingForm');
+  const plateConfirmed = document.getElementById('plateConfirmed');
+  const cart = document.getElementById('cart');
+  const cartToggleBtn = document.getElementById('cartToggleBtn');
+  const cartBadge = document.getElementById('cartBadge');
+  const cartCloseBtn = document.getElementById('cartCloseBtn');
+  const cartNumberPlate = document.getElementById('cartNumberPlate');
+  const serviceSelect = document.getElementById('serviceSelect');
+  const carMakeInput = document.getElementById('carMake');
+  const carModelInput = document.getElementById('carModel');
+  const customerNameInput = document.getElementById('customerName');
+  const phoneNumberInput = document.getElementById('phoneNumber');
+  const dateSelectInput = document.getElementById('dateSelect');
+  const main = document.getElementById('main');
+  const bookingContainer = document.getElementById('bookingContainer');
+
+  // Set min date to today for date picker
+  const today = new Date().toISOString().split('T')[0];
+  dateSelectInput.min = today;
+
+  // Booking data
+  const booking = {
+    numberPlate: '',
+    carMake: '',
+    carModel: '',
+    customerName: '',
+    phoneNumber: '',
+    dateSelect: '',
+    selectedServices: [],
+  };
+
+  // Services data - example with savings
+  const services = [
+    { id: 'service1', name: 'Basic Service', price: 79, normalPrice: 99 },
+    { id: 'service2', name: 'Full Service', price: 149, normalPrice: 179 },
+    { id: 'service3', name: 'MOT Pre-Check', price: 49, normalPrice: 65 },
+    { id: 'service4', name: 'Brake Inspection', price: 29, normalPrice: 39 },
+    { id: 'service5', name: 'Oil Change', price: 59, normalPrice: 79 },
+    { id: 'service6', name: 'Tyre Replacement', price: 89, normalPrice: 110 },
+  ];
+
+  // Populate service select options
+  function populateServices() {
+    services.forEach(s => {
+      const option = document.createElement('option');
+      option.value = s.id;
+      option.textContent = `${s.name} - £${s.price} (Save £${s.normalPrice - s.price})`;
+      serviceSelect.appendChild(option);
+    });
+  }
+  populateServices();
+
+  // Start button click
+  startBtn.addEventListener('click', () => {
+    let flashes = 0;
+    const lights = [...dashboard.querySelectorAll('.light')];
+    const flashInterval = setInterval(() => {
+      lights.forEach(l => l.style.opacity = l.style.opacity === '1' ? '0.4' : '1');
+      flashes++;
+      if (flashes >= 6) {
+        clearInterval(flashInterval);
+        lights.forEach(l => l.style.opacity = '0.4');
+        platePopup.style.display = 'flex';
+        plateInput.focus();
+      }
+    }, 300);
+    startBtn.disabled = true;
+  });
+
+  // Plate input validation & formatting
+  plateInput.addEventListener('input', (e) => {
+    let val = e.target.value.toUpperCase();
+    val = val.replace(/[^A-Z0-9 ]/g, ''); 
+    if (val.length > 8) val = val.slice(0, 8);
+    e.target.value = val;
+  });
+
+  // Simple UK plate format check (basic, accepts "AB12 CDE" format)
+  function isValidPlate(str) {
+    // More relaxed: 1-2 letters + 1-2 digits + optional space + 3 letters
+    return /^[A-Z]{1,2}\d{1,2}\s?[A-Z]{3}$/.test(str.trim().toUpperCase());
+  }
+
+  plateSubmitBtn.addEventListener('click', () => {
+    const val = plateInput.value.toUpperCase().trim();
+    if (!isValidPlate(val)) {
+      plateError.textContent = 'Please enter a valid UK number plate, e.g. AB12 CDE';
+      plateInput.focus();
+      return;
+    }
+    plateError.textContent = '';
+    booking.numberPlate = val;
+    plateConfirmed.textContent = val;
+    cartNumberPlate.textContent = val;
+    platePopup.style.display = 'none';
+
+    // HIDE ALL FRONT PAGE ELEMENTS
+    dashboard.style.display = 'none';
+    main.style.display = 'none';
+    platePopup.style.display = 'none';
+
+    // SHOW BOOKING FORM & CART CONTAINER FULLSCREEN
+    bookingContainer.style.display = 'flex';
+    bookingForm.style.display = 'flex';
+    cartToggleBtn.style.display = 'none'; // Cart only visible if service selected
+
+    // Remove body overflow hidden to allow scrolling if needed
+    document.body.style.overflow = 'auto';
+
+    // Reset inputs if needed
+    plateInput.value = '';
+  });
+
+  // Form inputs update booking object
+  carMakeInput.addEventListener('input', e => booking.carMake = e.target.value.trim());
+  carModelInput.addEventListener('input', e => booking.carModel = e.target.value.trim());
+  customerNameInput.addEventListener('input', e => booking.customerName = e.target.value.trim());
+  phoneNumberInput.addEventListener('input', e => booking.phoneNumber = e.target.value.trim());
+  dateSelectInput.addEventListener('input', e => booking.dateSelect = e.target.value);
+
+  // Handle service selection
+  serviceSelect.addEventListener('change', () => {
+    const selectedId = serviceSelect.value;
+    if (!selectedId) return;
+    const existing = booking.selectedServices.find(s => s.id === selectedId);
+    if (!existing) {
+      const service = services.find(s => s.id === selectedId);
+      booking.selectedServices.push(service);
+      updateCart();
+    }
+    serviceSelect.value = ''; 
+  });
+
+  // Update cart
+  function updateCart() {
+    const cartItems = document.getElementById('cartItems');
+    cartItems.innerHTML = '';
+    let total = 0, normalTotal = 0;
+    booking.selectedServices.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'cart-item';
+      div.textContent = `${s.name} — £${s.price}`;
+      cartItems.appendChild(div);
+      total += s.price;
+      normalTotal += s.normalPrice;
+    });
+    const callOutFee = 20;
+    total += callOutFee; normalTotal += 20;
+
+    document.getElementById('cartTotal').textContent = `Total (incl. £20 call-out fee): £${total.toFixed(2)}`;
+    const saving = normalTotal - total;
+    document.getElementById('cartSavings').textContent = saving > 0 ? `You save £${saving.toFixed(2)}!` : '';
+    cartNumberPlate.textContent = booking.numberPlate;
+
+    const count = booking.selectedServices.length;
+    if (count > 0) {
+      cartToggleBtn.style.display = 'flex';
+      cartBadge.style.display = 'flex';
+      cartBadge.textContent = count;
+    } else {
+      cartToggleBtn.style.display = 'none';
+      cartBadge.style.display = 'none';
+      cart.style.display = 'none';
+    }
+  }
+
+  // Cart toggle
+  cartToggleBtn.addEventListener('click', () => {
+    cart.style.display = (cart.style.display === 'block') ? 'none' : 'block';
+  });
+  cartCloseBtn.addEventListener('click', () => {
+    cart.style.display = 'none';
+  });
+
+  // Booking submit
+  bookingForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (booking.selectedServices.length === 0) {
+      alert('Please select at least one service before booking.');
+      return;
+    }
+    alert(`Thanks ${booking.customerName}, your booking for vehicle ${booking.numberPlate} has been received.`);
+    bookingForm.reset();
+    booking.selectedServices = [];
+    booking.numberPlate = '';
+    plateConfirmed.textContent = '--';
+    cartNumberPlate.textContent = '--';
+    updateCart();
+    cart.style.display = 'none';
+    cartToggleBtn.style.display = 'none';
+    bookingForm.style.display = 'none';
+    // Reset front page UI
+    dashboard.style.display = 'flex';
+    main.style.display = 'flex';
+    startBtn.disabled = false;
+    document.body.style.overflow = 'hidden';
+  });
+</script>
+</body>
+</html>
