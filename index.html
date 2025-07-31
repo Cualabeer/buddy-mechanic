@@ -65,25 +65,88 @@
     50% { box-shadow: 0 0 30px limegreen; }
   }
 
-  /* Terms popup */
-  #termsPopup {
+  /* Number plate popup */
+  #platePopup {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.75);
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1100;
   }
-  #termsContent {
+  #platePopupContent {
     background: white;
-    padding: 25px;
+    padding: 25px 30px;
     border-radius: 10px;
-    max-width: 500px;
+    max-width: 360px;
+    width: 90%;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
-  #termsContent button {
+  #platePopupContent h2 {
+    margin-top: 0;
+  }
+  #platePopupContent p {
+    margin-bottom: 10px;
+  }
+  #plateInputWrapper {
+    margin-top: 15px;
+    position: relative;
+    max-width: 320px;
+    height: 60px;
+    background: #ffcc00;
+    border: 3px solid black;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    user-select: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .gb-badge {
+    background: #003399;
+    color: white;
+    font-weight: bold;
+    padding: 0 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px 0 0 6px;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    user-select: none;
+  }
+  .gb-badge span:first-child {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  #plateInput {
+    border: none;
+    outline: none;
+    font-weight: 900;
+    font-size: 2.4rem;
+    padding: 0 15px;
+    flex-grow: 1;
+    background: transparent;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    user-select: text;
+    height: 100%;
+    color: #001f3f;
+  }
+  #plateError {
+    color: red;
+    margin-top: 10px;
+    font-weight: 600;
+    min-height: 1.2em;
+  }
+  #platePopupContent button {
     margin-top: 20px;
     background: #1abc9c;
     border: none;
@@ -92,10 +155,10 @@
     border-radius: 8px;
     cursor: pointer;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     transition: background 0.3s ease;
   }
-  #termsContent button:hover {
+  #platePopupContent button:hover {
     background: #159e85;
   }
 
@@ -109,7 +172,7 @@
     height: calc(100vh - 12.5vh - 40px); /* full remaining height minus dashboard and margin */
   }
 
-  /* Booking Form */
+  /* Booking form */
   #bookingForm {
     flex: 1 1 60%;
     background: white;
@@ -133,7 +196,7 @@
     color: #003366;
   }
   #bookingForm select,
-  #bookingForm input:not(#numberPlate) {
+  #bookingForm input {
     width: 100%;
     padding: 10px 12px;
     margin-top: 6px;
@@ -142,51 +205,36 @@
     font-size: 1rem;
   }
 
-  /* Number Plate Styling */
-  .plate {
+  /* Number plate display */
+  #plateDisplay {
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 4px;
+    background: #ffcc00;
+    border: 3px solid black;
+    border-radius: 6px;
+    padding: 8px 20px;
+    width: max-content;
+    margin-bottom: 15px;
+    user-select: none;
     display: flex;
     align-items: center;
-    background: #ffcc00;
-    border: 2px solid black;
-    border-radius: 4px;
-    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
-    font-size: 1.3rem;
-    letter-spacing: 2px;
-    color: black;
-    padding: 6px 12px;
-    justify-content: flex-start;
-    user-select: none;
   }
-  .plate .gb {
+  #plateDisplay .gb {
     background: #003399;
     color: white;
     font-weight: bold;
-    font-size: 0.8rem;
-    padding: 6px 10px;
-    margin-right: 10px;
-    border-radius: 2px 0 0 2px;
+    font-size: 1.1rem;
+    padding: 8px 12px;
+    margin-right: 15px;
+    border-radius: 4px 0 0 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    user-select: none;
   }
-  .plate .gb span {
-    font-size: 1.2rem;
+  #plateDisplay .gb span {
+    font-size: 1.4rem;
     line-height: 1;
-  }
-
-  #numberPlate {
-    border: none;
-    background: transparent;
-    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
-    font-size: 1.3rem;
-    letter-spacing: 2px;
-    color: black;
-    outline: none;
-    width: 120px;
-    text-transform: uppercase;
-    caret-color: black;
-    user-select: text;
   }
 
   /* Floating Cart */
@@ -258,9 +306,26 @@
     align-items: center;
     justify-content: center;
     z-index: 1001;
+    position: relative;
   }
   #cartToggleBtn:hover {
     background: #159e85;
+  }
+  #cartBadge {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    background: red;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
   }
 
   /* Booking container responsiveness */
@@ -301,177 +366,237 @@
   <button id="startBtn" aria-label="Start booking button">START</button>
 </div>
 
-<!-- Terms popup -->
-<div id="termsPopup" role="dialog" aria-modal="true" aria-labelledby="termsTitle" aria-describedby="termsDesc">
-  <div id="termsContent">
-    <h2 id="termsTitle">Terms & Conditions</h2>
-    <p id="termsDesc">Please agree to the terms and conditions before booking your service.</p>
-    <button id="agreeBtn" aria-label="Agree to terms and proceed">I Agree</button>
+<!-- Number plate popup -->
+<div id="platePopup" role="dialog" aria-modal="true" aria-labelledby="plateTitle" aria-describedby="plateDesc">
+  <div id="platePopupContent">
+    <h2 id="plateTitle">Enter Your Vehicle Number Plate</h2>
+    <p id="plateDesc">Please enter your UK number plate to proceed with booking.</p>
+    <div id="plateInputWrapper">
+      <div class="gb-badge" aria-hidden="true">
+        <span>🇬🇧</span>
+        <span>GB</span>
+      </div>
+      <input id="plateInput" type="text" maxlength="8" placeholder="AB12 CDE" autocomplete="off" spellcheck="false" aria-describedby="plateError" />
+    </div>
+    <div id="plateError" role="alert" aria-live="assertive"></div>
+    <button id="plateSubmitBtn">Continue</button>
   </div>
 </div>
 
-<!-- Booking container -->
+<!-- Booking and Cart container -->
 <div id="bookingContainer">
-
-  <!-- Booking form -->
-  <form id="bookingForm" role="form" aria-label="Booking form">
-    <!-- Number plate input styled as plate -->
-    <div class="plate" aria-label="Vehicle number plate input">
-      <div class="gb" aria-hidden="true"><span>🇬🇧</span>GB</div>
-      <input
-        id="numberPlate"
-        name="numberPlate"
-        type="text"
-        maxlength="8"
-        placeholder="AB12 CDE"
-        autocomplete="off"
-        spellcheck="false"
-        aria-required="true"
-        aria-describedby="plateHelp"
-        required
-      />
+  <form id="bookingForm" aria-label="Booking form">
+    <div id="plateDisplay" aria-live="polite">
+      <div class="gb" aria-hidden="true"><span>🇬🇧</span><span>GB</span></div>
+      <div id="plateConfirmed">--</div>
     </div>
-    <small id="plateHelp" style="color:#666;">Enter your vehicle registration number here</small>
-
-    <h2>Book a Service</h2>
-
+    <h2>Booking Details</h2>
     <label for="carMake">Car Make</label>
     <input id="carMake" name="carMake" type="text" placeholder="e.g. BMW" autocomplete="off" required />
 
     <label for="carModel">Car Model</label>
-    <input id="carModel" name="carModel" type="text" placeholder="e.g. 118i" autocomplete="off" required />
-
-    <label for="serviceSelect">Select Service</label>
-    <select id="serviceSelect" name="service" aria-label="Select Service" required>
-      <option value="">-- Select --</option>
-      <!-- options will be added dynamically -->
-    </select>
+    <input id="carModel" name="carModel" type="text" placeholder="e.g. 3 Series" autocomplete="off" required />
 
     <label for="customerName">Your Name</label>
-    <input id="customerName" name="customerName" type="text" placeholder="Full Name" autocomplete="off" required />
+    <input id="customerName" name="customerName" type="text" placeholder="e.g. John Smith" autocomplete="off" required />
 
     <label for="phoneNumber">Phone Number</label>
-    <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="07123 456789" autocomplete="off" required />
+    <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="e.g. 07123 456789" autocomplete="off" required />
 
     <label for="dateSelect">Preferred Date</label>
-    <input id="dateSelect" name="dateSelect" type="date" required />
+    <input id="dateSelect" name="dateSelect" type="date" required min="" />
 
-    <button type="submit" style="margin-top: 20px; background: #1abc9c; color: white; font-weight: 700; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">Book Now</button>
+    <label for="serviceSelect">Select a Service to Add</label>
+    <select id="serviceSelect" aria-label="Service selection">
+      <option value="">-- Select a service --</option>
+    </select>
+
+    <button type="submit" style="margin-top:20px; background:#1abc9c; color:#fff; font-weight:700; padding:12px; border:none; border-radius:8px; cursor:pointer; font-size:1.1rem;">Confirm Booking</button>
   </form>
 
-  <!-- Cart -->
-  <div id="cart" aria-label="Booking cart">
+  <aside id="cart" aria-label="Booking summary cart">
     <button id="cartCloseBtn" aria-label="Close cart">&times;</button>
-    <h3>Your Booking</h3>
-    <div id="cartPlate" class="plate" aria-live="polite" aria-atomic="true">
-      <div class="gb" aria-hidden="true"><span>🇬🇧</span>GB</div>
-      <span id="cartNumberPlate" style="margin-left:10px;">--</span>
+    <h3>Your Booking Cart</h3>
+    <div id="cartNumberPlate" style="font-weight:bold; margin-bottom:10px; font-family: 'Arial Black', Gadget, sans-serif; font-size: 1.4rem; letter-spacing: 4px; background:#ffcc00; border:3px solid black; padding:6px 12px; width: max-content; user-select:none;">
+      --
     </div>
     <div id="cartItems"></div>
-    <div class="cart-total" id="cartTotal"></div>
+    <div class="cart-total" id="cartTotal">Total: £0.00</div>
     <div class="cart-savings" id="cartSavings"></div>
-  </div>
-
+  </aside>
 </div>
 
-<!-- Floating Cart Toggle Button -->
-<button id="cartToggleBtn" aria-label="Toggle booking cart">&#128722;</button>
+<!-- Cart toggle button -->
+<button id="cartToggleBtn" aria-label="Toggle booking cart">
+  🛒
+  <span id="cartBadge"></span>
+</button>
 
 <script>
+  // Elements
   const startBtn = document.getElementById('startBtn');
-  const termsPopup = document.getElementById('termsPopup');
-  const agreeBtn = document.getElementById('agreeBtn');
-  const main = document.getElementById('main');
-  const bookingForm = document.getElementById('bookingForm');
   const dashboard = document.getElementById('dashboard');
-
-  const serviceSelect = document.getElementById('serviceSelect');
+  const platePopup = document.getElementById('platePopup');
+  const plateInput = document.getElementById('plateInput');
+  const plateSubmitBtn = document.getElementById('plateSubmitBtn');
+  const plateError = document.getElementById('plateError');
+  const bookingForm = document.getElementById('bookingForm');
+  const plateConfirmed = document.getElementById('plateConfirmed');
   const cart = document.getElementById('cart');
   const cartToggleBtn = document.getElementById('cartToggleBtn');
+  const cartBadge = document.getElementById('cartBadge');
   const cartCloseBtn = document.getElementById('cartCloseBtn');
-  const cartItemsDiv = document.getElementById('cartItems');
-  const cartTotalDiv = document.getElementById('cartTotal');
-  const cartSavingsDiv = document.getElementById('cartSavings');
-  const numberPlateInput = document.getElementById('numberPlate');
   const cartNumberPlate = document.getElementById('cartNumberPlate');
+  const serviceSelect = document.getElementById('serviceSelect');
+  const carMakeInput = document.getElementById('carMake');
+  const carModelInput = document.getElementById('carModel');
+  const customerNameInput = document.getElementById('customerName');
+  const phoneNumberInput = document.getElementById('phoneNumber');
+  const dateSelectInput = document.getElementById('dateSelect');
 
-  // Sample services with price & usual price for savings
+  // Set min date to today for date picker
+  const today = new Date().toISOString().split('T')[0];
+  dateSelectInput.min = today;
+
+  // Booking data
+  const booking = {
+    numberPlate: '',
+    carMake: '',
+    carModel: '',
+    customerName: '',
+    phoneNumber: '',
+    dateSelect: '',
+    selectedServices: [],
+  };
+
+  // Services data - example with savings
   const services = [
-    {id:'service', name: 'Service', price: 70, usualPrice: 100},
-    {id:'mot', name: 'MOT Pre-Check', price: 45, usualPrice: 60},
-    {id:'oilchange', name: 'Oil Change', price: 50, usualPrice: 65},
-    {id:'brakes', name: 'Brake Inspection', price: 40, usualPrice: 55},
-    {id:'battery', name: 'Battery Test', price: 30, usualPrice: 45}
+    { id: 'service1', name: 'Basic Service', price: 79, normalPrice: 99 },
+    { id: 'service2', name: 'Full Service', price: 149, normalPrice: 179 },
+    { id: 'service3', name: 'MOT Pre-Check', price: 49, normalPrice: 65 },
+    { id: 'service4', name: 'Brake Inspection', price: 29, normalPrice: 39 },
+    { id: 'service5', name: 'Oil Change', price: 59, normalPrice: 79 },
+    { id: 'service6', name: 'Tyre Replacement', price: 89, normalPrice: 110 },
   ];
 
   // Populate service select options
   function populateServices() {
     services.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = `${s.name} - £${s.price} (Save £${s.usualPrice - s.price})`;
-      serviceSelect.appendChild(opt);
+      const option = document.createElement('option');
+      option.value = s.id;
+      option.textContent = `${s.name} - £${s.price} (Save £${s.normalPrice - s.price})`;
+      serviceSelect.appendChild(option);
     });
   }
-
   populateServices();
 
-  // Booking data model
-  let booking = {
-    numberPlate: '',
-    carMake: '',
-    carModel: '',
-    selectedServices: [],
-    customerName: '',
-    phoneNumber: '',
-    dateSelect: ''
-  };
-
-  // Update cart display
-  function updateCart() {
-    booking.numberPlate = numberPlateInput.value.trim().toUpperCase();
-    cartNumberPlate.textContent = booking.numberPlate || '--';
-
-    // Show/hide cart toggle button if services selected
-    if (booking.selectedServices.length > 0) {
-      cartToggleBtn.style.display = 'flex';
-    } else {
-      cartToggleBtn.style.display = 'none';
-      cart.style.display = 'none';
-    }
-
-    // Update cart items
-    cartItemsDiv.innerHTML = '';
-    let total = 0;
-    let savings = 0;
-    booking.selectedServices.forEach(id => {
-      const svc = services.find(s => s.id === id);
-      if (svc) {
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.textContent = `${svc.name}: £${svc.price}`;
-        cartItemsDiv.appendChild(div);
-        total += svc.price;
-        savings += (svc.usualPrice - svc.price);
+  // Start button click
+  startBtn.addEventListener('click', () => {
+    // Flash lights 3 times then show plate popup
+    let flashes = 0;
+    const lights = [...dashboard.querySelectorAll('.light')];
+    const flashInterval = setInterval(() => {
+      lights.forEach(l => l.style.opacity = l.style.opacity === '1' ? '0.4' : '1');
+      flashes++;
+      if (flashes >= 6) {
+        clearInterval(flashInterval);
+        lights.forEach(l => l.style.opacity = '0.4');
+        platePopup.style.display = 'flex';
+        plateInput.focus();
       }
-    });
-
-    cartTotalDiv.textContent = `Total: £${total.toFixed(2)}`;
-    cartSavingsDiv.textContent = savings > 0 ? `You save £${savings.toFixed(2)}!` : '';
-  }
-
-  // Service select handler
-  serviceSelect.addEventListener('change', e => {
-    const val = e.target.value;
-    if (!booking.selectedServices.includes(val) && val) {
-      booking.selectedServices.push(val);
-    }
-    // Reset select back to placeholder
-    e.target.value = '';
-    updateCart();
+    }, 300);
+    startBtn.disabled = true;
   });
 
-  // Cart toggle handlers
+  // Plate input validation and max 8 chars
+  plateInput.addEventListener('input', (e) => {
+    let val = e.target.value.toUpperCase();
+    val = val.replace(/[^A-Z0-9 ]/g, ''); // only letters, numbers, spaces
+    if (val.length > 8) val = val.slice(0, 8);
+    e.target.value = val;
+  });
+
+  // Validate plate (basic UK format)
+  function isValidPlate(str) {
+    // Simple regex for UK plates (improved to allow space optional)
+    return /^[A-Z]{1,2}\d{1,2}\s?[A-Z]{3}$/.test(str.trim().toUpperCase());
+  }
+
+  plateSubmitBtn.addEventListener('click', () => {
+    const val = plateInput.value.toUpperCase().trim();
+    if (!isValidPlate(val)) {
+      plateError.textContent = 'Please enter a valid UK number plate, e.g. AB12 CDE';
+      plateInput.focus();
+      return;
+    }
+    plateError.textContent = '';
+    booking.numberPlate = val;
+    plateConfirmed.textContent = val;
+    cartNumberPlate.textContent = val;
+    platePopup.style.display = 'none';
+    bookingForm.style.display = 'flex';
+    startBtn.style.display = 'none';
+    plateInput.value = '';
+  });
+
+  // Booking form inputs update booking object
+  carMakeInput.addEventListener('input', e => booking.carMake = e.target.value.trim());
+  carModelInput.addEventListener('input', e => booking.carModel = e.target.value.trim());
+  customerNameInput.addEventListener('input', e => booking.customerName = e.target.value.trim());
+  phoneNumberInput.addEventListener('input', e => booking.phoneNumber = e.target.value.trim());
+  dateSelectInput.addEventListener('input', e => booking.dateSelect = e.target.value);
+
+  // Handle service selection and cart updates
+  serviceSelect.addEventListener('change', () => {
+    const selectedId = serviceSelect.value;
+    if (!selectedId) return;
+    const existing = booking.selectedServices.find(s => s.id === selectedId);
+    if (!existing) {
+      const service = services.find(s => s.id === selectedId);
+      booking.selectedServices.push(service);
+      updateCart();
+    }
+    serviceSelect.value = ''; // reset select
+  });
+
+  // Update cart UI and badge
+  function updateCart() {
+    const cartItems = document.getElementById('cartItems');
+    cartItems.innerHTML = '';
+    let total = 0;
+    let normalTotal = 0;
+    booking.selectedServices.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'cart-item';
+      div.textContent = `${s.name} — £${s.price}`;
+      cartItems.appendChild(div);
+      total += s.price;
+      normalTotal += s.normalPrice;
+    });
+    // Always add call-out fee £20
+    const callOutFee = 20;
+    total += callOutFee;
+    normalTotal += 20;
+
+    document.getElementById('cartTotal').textContent = `Total (incl. £20 call-out fee): £${total.toFixed(2)}`;
+    const saving = normalTotal - total;
+    document.getElementById('cartSavings').textContent = saving > 0 ? `You save £${saving.toFixed(2)}!` : '';
+
+    cartNumberPlate.textContent = booking.numberPlate;
+
+    const count = booking.selectedServices.length;
+    if (count > 0) {
+      cartToggleBtn.style.display = 'flex';
+      cartBadge.style.display = 'flex';
+      cartBadge.textContent = count;
+    } else {
+      cartToggleBtn.style.display = 'none';
+      cartBadge.style.display = 'none';
+      cart.style.display = 'none';
+    }
+  }
+
+  // Cart toggle button handler
   cartToggleBtn.addEventListener('click', () => {
     if (cart.style.display === 'block') {
       cart.style.display = 'none';
@@ -479,48 +604,32 @@
       cart.style.display = 'block';
     }
   });
+
+  // Cart close button
   cartCloseBtn.addEventListener('click', () => {
     cart.style.display = 'none';
   });
 
-  // Start button handler
-  startBtn.addEventListener('click', () => {
-    // Flash lights animation
-    const lights = document.querySelectorAll('.light');
-    let flashes = 0;
-    const maxFlashes = 4;
-    const flashInterval = setInterval(() => {
-      lights.forEach(l => l.style.opacity = l.style.opacity === '1' ? '0.4' : '1');
-      flashes++;
-      if (flashes >= maxFlashes) {
-        clearInterval(flashInterval);
-        // Hide main & show terms popup
-        main.style.display = 'none';
-        termsPopup.style.display = 'flex';
-        // Turn lights off
-        lights.forEach(l => l.style.opacity = '0.4');
-      }
-    }, 400);
-  });
-
-  // Agree button handler
-  agreeBtn.addEventListener('click', () => {
-    termsPopup.style.display = 'none';
-    dashboard.style.display = 'flex';
-    bookingForm.style.display = 'flex';
-  });
-
-  // Update booking data on form input changes
-  bookingForm.addEventListener('input', e => {
-    const tgt = e.target;
-    booking[tgt.name] = tgt.value;
-    updateCart();
-  });
-
-  // Prevent form submit default & alert (placeholder)
+  // Booking form submit
   bookingForm.addEventListener('submit', e => {
     e.preventDefault();
-    alert('Booking submitted!\n(Integrate your backend here)');
+    if (booking.selectedServices.length === 0) {
+      alert('Please select at least one service before booking.');
+      return;
+    }
+    alert(`Thanks ${booking.customerName}, your booking for vehicle ${booking.numberPlate} has been received.`);
+    // Reset everything
+    bookingForm.reset();
+    booking.selectedServices = [];
+    booking.numberPlate = '';
+    plateConfirmed.textContent = '--';
+    cartNumberPlate.textContent = '--';
+    updateCart();
+    cart.style.display = 'none';
+    cartToggleBtn.style.display = 'none';
+    bookingForm.style.display = 'none';
+    startBtn.style.display = 'inline-block';
+    startBtn.disabled = false;
   });
 </script>
 </body>
