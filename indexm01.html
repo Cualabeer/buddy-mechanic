@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Mobile Mechanic</title>
+<style>
+  body, html {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100%; width: 100%;
+    background: #f7f8fa;
+  }
+
+  /* Dashboard bar */
+  #dashboard {
+    height: 12.5vh;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+  }
+  .light {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+  .oil { background: red; }
+  .engine { background: orange; }
+  .fuel { background: yellow; }
+  .abs { background: #ff6600; }
+
+  /* Start button area */
+  #main {
+    height: 87.5vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f7f8fa;
+    flex-direction: column;
+  }
+  #startBtn {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: none;
+    background: limegreen;
+    box-shadow: 0 0 20px limegreen;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 10px limegreen; }
+    50% { box-shadow: 0 0 25px limegreen; }
+    100% { box-shadow: 0 0 10px limegreen; }
+  }
+
+  /* Terms popup */
+  #termsPopup {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none; justify-content: center; align-items: center;
+    z-index: 200;
+  }
+  #termsContent {
+    background: white;
+    padding: 20px; border-radius: 8px;
+    max-width: 500px; text-align: center;
+  }
+  #termsContent button {
+    margin-top: 15px;
+    background: #1abc9c; border: none; color: white;
+    padding: 10px 20px; border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* Booking form */
+  #bookingForm {
+    display: none;
+    padding: 20px;
+  }
+  #bookingForm label {
+    display: block; margin-top: 10px; font-weight: 600;
+  }
+  #bookingForm input, #bookingForm select {
+    width: 100%; padding: 10px; margin-top: 5px;
+    border: 1px solid #ccc; border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  /* Number Plate Styling */
+  .plate {
+    display: flex;
+    align-items: center;
+    background: #ffcc00;
+    border: 2px solid black;
+    border-radius: 4px;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: black;
+    padding: 5px 10px;
+    justify-content: flex-start;
+  }
+  .plate .gb {
+    background: #003399;
+    color: white;
+    font-weight: bold;
+    font-size: 0.7rem;
+    padding: 4px 6px;
+    margin-right: 8px;
+    border-radius: 2px 0 0 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: font-size 0.3s ease, padding 0.3s ease;
+  }
+  .plate .gb span {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  /* Sticky plate header */
+  #plateHeader {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffcc00;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  }
+
+  /* Shrunk header on scroll */
+  #plateHeader.shrunk {
+    font-size: 0.9rem;
+    padding: 3px 6px;
+  }
+  #plateHeader.shrunk .gb {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+
+  /* Floating cart */
+  #cart {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 280px; background: white;
+    border: 2px solid #1abc9c; border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    display: none; padding: 10px;
+    font-size: 0.9rem;
+  }
+  #cart h3 {
+    margin: 0; font-size: 1.1rem; color: #1abc9c;
+  }
+  .cart-item { margin-top: 5px; }
+  .cart-total {
+    font-weight: bold; margin-top: 10px;
+    font-size: 1.1rem;
+  }
+  .cart-savings {
+    color: green; font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Dashboard Lights -->
+<div id="dashboard">
+  <div class="light oil"></div>
+  <div class="light engine"></div>
+  <div class="light fuel"></div>
+  <div class="light abs"></div>
+</div>
+
+<!-- Main with Start Button -->
+<div id="main">
+  <button id="startBtn">START</button>
+</div>
+
+<!-- Terms Popup -->
+<div id="termsPopup">
+  <div id="termsContent">
+    <h2>Terms & Conditions</h2>
+    <p>Please agree before booking your service.</p>
+    <button id="agreeBtn">I Agree</button>
+  </div>
+</div>
+
+<!-- Booking Form -->
+<div id="bookingForm">
+  <!-- Sticky Number plate header -->
+  <div id="plateHeader" class="plate">
+    <div class="gb"><span>🇬🇧</span>GB</div>
+    <div id="plateTextHeader">---</div>
+  </div>
+
+  <h2>Book a Service</h2>
+  <label>Vehicle Number Plate</label>
+  <input id="numberPlate" type="text" placeholder="e.g. AB12 CDE" autocomplete="off" />
+
+  <label>Select Service</label>
+  <select id="serviceSelect">
+    <option value="">-- Select --</option>
+    <option data-old="180" value="120">Full Service - £120</option>
+    <option data-old="60" value="40">MOT Pre-check - £40</option>
+    <option data-old="100" value="70">Brake Pads Replacement - £70</option>
+    <option data-old="80" value="50">Battery Check - £50</option>
+  </select>
+
+  <label>Your Name</label>
+  <input type="text" placeholder="Full Name" autocomplete="off" />
+
+  <label>Phone Number</label>
+  <input type="text" placeholder="e.g. 07400 000000" autocomplete="off" />
+
+  <label>Date</label>
+  <input type="date" />
+</div>
+
+<!-- Floating Cart -->
+<div id="cart">
+  <h3>Your Booking</h3>
+  <div id="plateDisplay" class="plate">
+    <div class="gb"><span>🇬🇧</span>GB</div>
+    <div id="plateText">---</div>
+  </div>
+  <div id="cartItems"></div>
+  <div class="cart-total">Total: £<span id="cartTotal">0</span></div>
+  <div class="cart-savings">You save: £<span id="cartSavings">0</span></div>
+</div>
+
+<script>
+  const startBtn = document.getElementById('startBtn');
+  const termsPopup = document.getElementById('termsPopup');
+  const agreeBtn = document.getElementById('agreeBtn');
+  const bookingForm = document.getElementById('bookingForm');
+  const dashboardLights = document.querySelectorAll('.light');
+  const cart = document.getElementById('cart');
+  const serviceSelect = document.getElementById('serviceSelect');
+  const cartItems = document.getElementById('cartItems');
+  const cartTotal = document.getElementById('cartTotal');
+  const cartSavings = document.getElementById('cartSavings');
+  const plateText = document.getElementById('plateText');
+  const plateTextHeader = document.getElementById('plateTextHeader');
+  const numberPlate = document.getElementById('numberPlate');
+
+  let total = 0, savings = 0;
+
+  // Start button animation
+  startBtn.addEventListener('click', () => {
+    dashboardLights.forEach(light => light.style.opacity = 1);
+    setTimeout(() => {
+      dashboardLights.forEach(light => light.style.opacity = 0);
+      termsPopup.style.display = 'flex';
+    }, 2000);
+  });
+
+  // Agree to terms
+  agreeBtn.addEventListener('click', () => {
+    termsPopup.style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    bookingForm.style.display = 'block';
+  });
+
+  // Update plate text everywhere
+  numberPlate.addEventListener('input', () => {
+    const plate = numberPlate.value.toUpperCase() || "---";
+    plateText.textContent = plate;
+    plateTextHeader.textContent = plate;
+  });
+
+  // Add services to cart
+  serviceSelect.addEventListener('change', () => {
+    const option = serviceSelect.selectedOptions[0];
+    if (!option.value) return;
+    const price = parseInt(option.value);
+    const oldPrice = parseInt(option.dataset.old);
+    const name = option.textContent;
+
+    cartItems.innerHTML += `<div class="cart-item">${name}</div>`;
+    total += price;
+    savings += (oldPrice - price);
+    cartTotal.textContent = total;
+    cartSavings.textContent = savings;
+    cart.style.display = 'block';
+
+    serviceSelect.value = "";
+  });
+
+  // Shrink plate header on scroll
+  window.addEventListener('scroll', () => {
+    const header = document.getElementById('plateHeader');
+    if (window.scrollY > 30) {
+      header.classList.add('shrunk');
+    } else {
+      header.classList.remove('shrunk');
+    }
+  });
+</script>
+
+</body>
+</html>
