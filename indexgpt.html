@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ey Buddy Booking</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f7f9fa;
+      color: #222;
+    }
+
+    /* Progress bar */
+    .progress {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: #111;
+      color: white;
+      font-size: 14px;
+    }
+    .progress span.active {
+      color: limegreen;
+      font-weight: bold;
+    }
+
+    /* Start screen */
+    #start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: black;
+      color: white;
+    }
+    .dashboard-lights {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 40px;
+    }
+    .light {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+    .light.oil { background: red; }
+    .light.engine { background: orange; }
+    .light.fuel { background: yellow; }
+    .light.abs { background: amber; }
+    #start-btn {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: none;
+      background: limegreen;
+      font-size: 22px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 20px limegreen;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px limegreen; }
+      50% { box-shadow: 0 0 30px limegreen; }
+      100% { box-shadow: 0 0 10px limegreen; }
+    }
+
+    /* Hidden steps */
+    .step { display: none; padding: 20px; }
+    .active-step { display: block; }
+
+    /* Terms popup */
+    #terms-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      margin: 40px auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    /* Number plate */
+    .plate {
+      background: #ffcc00;
+      padding: 10px 20px;
+      font-weight: bold;
+      font-size: 22px;
+      border: 2px solid #333;
+      display: inline-block;
+      border-radius: 6px;
+      position: relative;
+    }
+    .plate::before {
+      content: "GB";
+      background: #0057b7;
+      color: white;
+      padding: 5px;
+      margin-right: 8px;
+    }
+    #plate-input {
+      border: none;
+      font-size: 22px;
+      font-weight: bold;
+      text-transform: uppercase;
+      background: transparent;
+      outline: none;
+      width: 120px;
+    }
+
+    /* Services */
+    .service {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .service input { margin-right: 10px; }
+    .service span.saving { color: red; font-size: 14px; }
+
+    /* Cart */
+    #cart {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      border: 2px solid limegreen;
+      padding: 10px;
+      border-radius: 6px;
+      width: 250px;
+      display: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    #cart h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+    }
+    #cart ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+    #cart ul li { margin: 4px 0; }
+
+    /* Buttons */
+    .btn {
+      background: limegreen;
+      border: none;
+      color: white;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .btn:hover { background: green; }
+  </style>
+</head>
+<body>
+
+  <!-- Progress -->
+  <div class="progress">
+    <span id="p1" class="active">Start</span>
+    <span id="p2">Terms</span>
+    <span id="p3">Plate</span>
+    <span id="p4">Services</span>
+    <span id="p5">Confirm</span>
+  </div>
+
+  <!-- Step 1: Start -->
+  <div id="start-screen" class="step active-step">
+    <div class="dashboard-lights">
+      <div class="light oil"></div>
+      <div class="light engine"></div>
+      <div class="light fuel"></div>
+      <div class="light abs"></div>
+    </div>
+    <button id="start-btn">START</button>
+  </div>
+
+  <!-- Step 2: Terms -->
+  <div id="terms" class="step">
+    <div id="terms-box">
+      <h2>Terms & Conditions</h2>
+      <p>Please agree to continue with your booking.</p>
+      <button class="btn" onclick="goToStep(3)">I Agree</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Plate -->
+  <div id="plate-step" class="step">
+    <h2>Enter Your Number Plate</h2>
+    <div class="plate">
+      <input type="text" id="plate-input" maxlength="8" placeholder="AB12 CDE">
+    </div>
+    <br>
+    <button class="btn" onclick="savePlate()">Continue to Services</button>
+  </div>
+
+  <!-- Step 4: Services -->
+  <div id="services" class="step">
+    <h2>Select Services</h2>
+    <div class="service">
+      <label><input type="checkbox" data-name="Oil Change" data-price="50" data-usual="65"> Oil Change</label>
+      <span class="saving">Save £15</span>
+    </div>
+    <div class="service">
+      <label><input type="checkbox" data-name="MOT Pre-Check" data-price="70" data-usual="90"> MOT Pre-Check</label>
+      <span class="saving">Save £20</span>
+    </div>
+    <div class="service">
+      <label><input type="checkbox" data-name="Brake Pads" data-price="120" data-usual="150"> Brake Pads</label>
+      <span class="saving">Save £30</span>
+    </div>
+    <button class="btn" onclick="goToStep(5)">Continue</button>
+  </div>
+
+  <!-- Step 5: Confirm -->
+  <div id="confirm" class="step">
+    <h2>Booking Confirmation</h2>
+    <p id="summary"></p>
+    <button class="btn">Confirm Booking</button>
+  </div>
+
+  <!-- Cart -->
+  <div id="cart">
+    <h3>Your Booking</h3>
+    <div id="cart-plate"></div>
+    <ul id="cart-items"></ul>
+    <p><strong>Total: £<span id="cart-total">0</span></strong></p>
+    <p style="color:red;">You save £<span id="cart-savings">0</span></p>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let cart = [];
+    let total = 0;
+    let savings = 0;
+    let plateNumber = "";
+
+    function goToStep(step) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active-step'));
+      document.getElementById([
+        'start-screen','terms','plate-step','services','confirm'
+      ][step-1]).classList.add('active-step');
+      document.querySelectorAll('.progress span').forEach(p=>p.classList.remove('active'));
+      document.getElementById("p"+step).classList.add('active');
+      currentStep = step;
+    }
+
+    // Start button → Terms
+    document.getElementById('start-btn').addEventListener('click', () => {
+      goToStep(2);
+    });
+
+    // Save Plate
+    function savePlate() {
+      const input = document.getElementById('plate-input');
+      plateNumber = input.value.toUpperCase();
+      document.getElementById('cart-plate').innerText = plateNumber;
+      document.getElementById('cart').style.display = 'block';
+      goToStep(4);
+    }
+
+    // Service selection
+    document.querySelectorAll('.service input').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const name = cb.dataset.name;
+        const price = parseInt(cb.dataset.price);
+        const usual = parseInt(cb.dataset.usual);
+        if (cb.checked) {
+          cart.push({name, price, usual});
+        } else {
+          cart = cart.filter(item => item.name !== name);
+        }
+        updateCart();
+      });
+    });
+
+    function updateCart() {
+      total = 0;
+      savings = 0;
+      const list = document.getElementById('cart-items');
+      list.innerHTML = "";
+      cart.forEach(item => {
+        total += item.price;
+        savings += (item.usual - item.price);
+        const li = document.createElement('li');
+        li.textContent = `${item.name} – £${item.price}`;
+        list.appendChild(li);
+      });
+      document.getElementById('cart-total').innerText = total;
+      document.getElementById('cart-savings').innerText = savings;
+    }
+
+    // Confirmation
+    function buildSummary() {
+      const summary = document.getElementById('summary');
+      summary.innerHTML = `<strong>Plate:</strong> ${plateNumber}<br>
+      <strong>Services:</strong> ${cart.map(i=>i.name).join(", ")}<br>
+      <strong>Total:</strong> £${total} (You save £${savings})`;
+    }
+    document.querySelector('#services .btn').addEventListener('click', () => {
+      buildSummary();
+    });
+  </script>
+
+</body>
+</html>
