@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ey Buddy Admin Panel</title>
+<style>
+  /* Base & resets */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f7f8fa;
+    color: #222;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: #111;
+    color: #1abc9c;
+    padding: 15px 20px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    user-select: none;
+  }
+
+  main {
+    flex: 1;
+    padding: 15px 20px;
+    max-width: 600px;
+    margin: auto;
+    width: 100%;
+  }
+
+  h2 {
+    color: #16a085;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 1.6rem;
+  }
+
+  label {
+    display: block;
+    margin: 12px 0 6px 0;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  input[type="checkbox"] {
+    transform: scale(1.3);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  button {
+    background: #1abc9c;
+    border: none;
+    padding: 12px 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    user-select: none;
+  }
+
+  button:disabled {
+    background: #7fcbc0;
+    cursor: not-allowed;
+  }
+
+  /* Service list */
+  #servicesContainer {
+    margin-top: 20px;
+  }
+  .service-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .service-row > * {
+    margin: 6px 4px;
+  }
+  .service-row label {
+    flex-basis: 100%;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #16a085;
+  }
+  .service-row input[type="text"],
+  .service-row input[type="number"] {
+    flex-grow: 1;
+    max-width: 100px;
+  }
+  .service-row input[type="checkbox"] {
+    margin-top: 6px;
+  }
+  .remove-btn {
+    background: #e74c3c;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: white;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .remove-btn:hover {
+    background: #c0392b;
+  }
+
+  /* Add service */
+  #addServiceSection {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 2px solid #1abc9c;
+  }
+
+  /* Password section */
+  #passwordSection {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 2px solid #1abc9c;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .service-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .service-row input[type="text"],
+    .service-row input[type="number"] {
+      max-width: 100%;
+      width: 100%;
+    }
+    .remove-btn {
+      align-self: flex-end;
+      margin-top: 8px;
+    }
+  }
+</style>
+</head>
+<body>
+<header>Ey Buddy Admin Panel</header>
+<main>
+  <h2>Settings</h2>
+  <label for="hourlyRateInput">Price Per Hour (£)</label>
+  <input id="hourlyRateInput" type="number" min="0" step="0.01" />
+
+  <label for="calloutFeeInput">Call-out Fee (£)</label>
+  <input id="calloutFeeInput" type="number" min="0" step="0.01" />
+
+  <div id="servicesContainer"></div>
+
+  <section id="addServiceSection">
+    <h2>Add New Service</h2>
+    <label for="newServiceName">Service Name</label>
+    <input id="newServiceName" type="text" placeholder="e.g. Full Service" />
+    <label for="newServicePrice">Price (£)</label>
+    <input id="newServicePrice" type="number" min="0" step="0.01" />
+    <label for="newServiceOldPrice">Old Price (£)</label>
+    <input id="newServiceOldPrice" type="number" min="0" step="0.01" />
+    <label><input type="checkbox" id="newServiceActive" checked /> Active</label>
+    <label for="newServiceMaxQty">Maximum Quantity (1 or 2)</label>
+    <input id="newServiceMaxQty" type="number" min="1" max="2" step="1" value="1" />
+    <button id="addServiceBtn">Add Service</button>
+  </section>
+
+  <section id="passwordSection">
+    <h2>Admin Password</h2>
+    <label for="adminPasswordInput">Set / Change Password</label>
+    <input id="adminPasswordInput" type="password" autocomplete="new-password" placeholder="Enter new password" />
+    <button id="setPasswordBtn">Save Password</button>
+  </section>
+</main>
+
+<script>
+  // Util: simple sha-256 hashing using Web Crypto API
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Elements
+  const hourlyRateInput = document.getElementById('hourlyRateInput');
+  const calloutFeeInput = document.getElementById('calloutFeeInput');
+  const servicesContainer = document.getElementById('servicesContainer');
+  const addServiceBtn = document.getElementById('addServiceBtn');
+  const newServiceName = document.getElementById('newServiceName');
+  const newServicePrice = document.getElementById('newServicePrice');
+  const newServiceOldPrice = document.getElementById('newServiceOldPrice');
+  const newServiceActive = document.getElementById('newServiceActive');
+  const newServiceMaxQty = document.getElementById('newServiceMaxQty');
+  const adminPasswordInput = document.getElementById('adminPasswordInput');
+  const setPasswordBtn = document.getElementById('setPasswordBtn');
+
+  // Load from localStorage or initialize
+  function loadData() {
+    let dataRaw = localStorage.getItem('servicesData');
+    if (!dataRaw) {
+      return {
+        settings: { hourlyRate: 35, calloutFee: 20 },
+        services: {
+          mot: { name: "MOT Pre-check", price: 40, oldPrice: 70, maxQty: 2, active: true },
+          service: { name: "Full Service", price: 120, oldPrice: 200, maxQty: 2, active: true },
+          brakes: { name: "Brake Pads Replacement", price: 90, oldPrice: 150, maxQty: 1, active: true }
+        }
+      };
+    }
+    try {
+      return JSON.parse(dataRaw);
+    } catch {
+      return null;
+    }
+  }
+
+  function saveData(data) {
+    localStorage.setItem('servicesData', JSON.stringify(data));
+  }
+
+  // Display current data in form inputs
+  function renderSettings(data) {
+    hourlyRateInput.value = data.settings.hourlyRate;
+    calloutFeeInput.value = data.settings.calloutFee;
+  }
+
+  // Render list of services
+  function renderServices(data) {
+    servicesContainer.innerHTML = '';
+    const keys = Object.keys(data.services);
+    if (keys.length === 0) {
+      servicesContainer.innerHTML = '<p>No services available. Add some below.</p>';
+      return;
+    }
+    keys.forEach(key => {
+      const svc = data.services[key];
+      const div = document.createElement('div');
+      div.className = 'service-row';
+
+      // Service name input
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = svc.name;
+      nameInput.style.flexGrow = '2';
+      nameInput.addEventListener('change', () => {
+        data.services[key].name = nameInput.value.trim() || 'Unnamed Service';
+        saveData(data);
+      });
+
+      // Price input
+      const priceInput = document.createElement('input');
+      priceInput.type = 'number';
+      priceInput.min = 0;
+      priceInput.step = 0.01;
+      priceInput.value = svc.price;
+      priceInput.style.maxWidth = '90px';
+      priceInput.addEventListener('change', () => {
+        data.services[key].price = parseFloat(priceInput.value) || 0;
+        saveData(data);
+      });
+
+      // Old Price input
+      const oldPriceInput = document.createElement('input');
+      oldPriceInput.type = 'number';
+      oldPriceInput.min = 0;
+      oldPriceInput.step = 0.01;
+      oldPriceInput.value = svc.oldPrice;
+      oldPriceInput.style.maxWidth = '90px';
+      oldPriceInput.addEventListener('change', () => {
+        data.services[key].oldPrice = parseFloat(oldPriceInput.value) || 0;
+        saveData(data);
+      });
+
+      // Max Qty input (1 or 2)
+      const maxQtyInput = document.createElement('input');
+      maxQtyInput.type = 'number';
+      maxQtyInput.min = 1;
+      maxQtyInput.max = 2;
+      maxQtyInput.step = 1;
+      maxQtyInput.value = svc.maxQty || 1;
+      maxQtyInput.style.maxWidth = '50px';
+      maxQtyInput.addEventListener('change', () => {
+        let val = parseInt(maxQtyInput.value);
+        if (val < 1) val = 1;
+        if (val > 2) val = 2;
+        maxQtyInput.value = val;
+        data.services[key].maxQty = val;
+        saveData(data);
+      });
+
+      // Active checkbox
+      const activeLabel = document.createElement('label');
+      activeLabel.style.flexBasis = '100px';
+      activeLabel.style.display = 'flex';
+      activeLabel.style.alignItems = 'center';
+      const activeCheckbox = document.createElement('input');
+      activeCheckbox.type = 'checkbox';
+      activeCheckbox.checked = svc.active;
+      activeCheckbox.addEventListener('change', () => {
+        data.services[key].active = activeCheckbox.checked;
+        saveData(data);
+      });
+      activeLabel.appendChild(activeCheckbox);
+      activeLabel.appendChild(document.createTextNode('Active'));
+
+      // Remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-btn';
+      removeBtn.textContent = 'Remove';
+      removeBtn.title = `Remove service "${svc.name}"`;
+      removeBtn.addEventListener('click', () => {
+        if (confirm(`Remove service "${svc.name}"?`)) {
+          delete data.services[key];
+          saveData(data);
+          renderServices(data);
+        }
+      });
+
+      div.appendChild(nameInput);
+      div.appendChild(priceInput);
+      div.appendChild(oldPriceInput);
+      div.appendChild(maxQtyInput);
+      div.appendChild(activeLabel);
+      div.appendChild(removeBtn);
+
+      servicesContainer.appendChild(div);
+    });
+  }
+
+  // Load and show saved password hash
+  async function loadPasswordHash() {
+    return localStorage.getItem('adminPasswordHash') || null;
+  }
+
+  async function setPasswordHash(hash) {
+    localStorage.setItem('adminPasswordHash', hash);
+  }
+
+  // On page load
+  let servicesData = loadData();
+  renderSettings(servicesData);
+  renderServices(servicesData);
+
+  // Sync settings inputs
+  hourlyRateInput.addEventListener('change', () => {
+    let val = parseFloat(hourlyRateInput.value);
+    if (isNaN(val) || val < 0) val = 0;
+    hourlyRateInput.value = val.toFixed(2);
+    servicesData.settings.hourlyRate = val;
+    saveData(servicesData);
+  });
+
+  calloutFeeInput.addEventListener('change', () => {
+    let val = parseFloat(calloutFeeInput.value);
+    if (isNaN(val) || val < 0) val = 0;
+    calloutFeeInput.value = val.toFixed(2);
+    servicesData.settings.calloutFee = val;
+    saveData(servicesData);
+  });
+
+  // Add new service
+  addServiceBtn.addEventListener('click', () => {
+    const name = newServiceName.value.trim();
+    let price = parseFloat(newServicePrice.value);
+    let oldPrice = parseFloat(newServiceOldPrice.value);
+    const active = newServiceActive.checked;
+    let maxQty = parseInt(newServiceMaxQty.value);
+
+    if (!name) {
+      alert('Please enter a service name.');
+      return;
+    }
+    if (isNaN(price) || price < 0) {
+      alert('Please enter a valid price.');
+      return;
+    }
+    if (isNaN(oldPrice) || oldPrice < price) {
+      oldPrice = price;
+    }
+    if (isNaN(maxQty) || maxQty < 1) maxQty = 1;
+    if (maxQty > 2) maxQty = 2;
+
+    // Create a unique key based on name and timestamp
+    const key = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+
+    servicesData.services[key] = {
+      name,
+      price,
+      oldPrice,
+      active,
+      maxQty
+    };
+
+    saveData(servicesData);
+    renderServices(servicesData);
+
+    // Clear inputs
+    newServiceName.value = '';
+    newServicePrice.value = '';
+    newServiceOldPrice.value = '';
+    newServiceActive.checked = true;
+    newServiceMaxQty.value = 1;
+  });
+
+  // Set admin password (hashed)
+  setPasswordBtn.addEventListener('click', async () => {
+    const pass = adminPasswordInput.value.trim();
+    if (!pass) {
+      alert('Please enter a password to set.');
+      return;
+    }
+    const hash = await sha256(pass);
+    await setPasswordHash(hash);
+    alert('Admin password saved securely.');
+    adminPasswordInput.value = '';
+  });
+
+</script>
+</body>
+</html>
